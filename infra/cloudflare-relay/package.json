@@ -1,0 +1,15 @@
+{
+  "name": "controli-cloudflare-relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "npx wrangler@4.100.0 deploy",
+    "dev": "npx wrangler@4.100.0 dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260616.1",
+    "typescript": "^5.8.0"
+  }
+}
