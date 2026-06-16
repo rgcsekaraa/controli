@@ -141,22 +141,6 @@ dist/controli-windows-amd64.exe
 - The guest controls the hosted shell for the lifetime of the session.
 - This is alpha software. Use it on machines you own or are authorized to administer.
 
-## More Docs
+## Documentation
 
 - [Documentation site](https://rgcsekaraa.github.io/controli/)
-- [Overview](docs/overview.md)
-- [Install](docs/install.md)
-- [Relay](docs/relay.md)
-- [Protocol](docs/protocol.md)
-- [Configuration](docs/configuration.md)
-- [Host](docs/host.md)
-- [Join](docs/join.md)
-- [Windows](docs/windows.md)
-- [Linux](docs/linux.md)
-- [macOS](docs/macos.md)
-- [Security](docs/security.md)
-- [Build](docs/build.md)
-- [Release](docs/release.md)
-- [Troubleshooting](docs/troubleshooting.md)
-- [State](docs/state.md)
-- [Roadmap](docs/roadmap.md)
