@@ -1,0 +1,19 @@
+name = "controli-relay"
+main = "src/worker.ts"
+compatibility_date = "2026-06-16"
+
+[[durable_objects.bindings]]
+name = "SESSIONS"
+class_name = "RelaySession"
+
+[[durable_objects.bindings]]
+name = "INVITES"
+class_name = "InviteCode"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RelaySession"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["InviteCode"]
