@@ -1,58 +1,49 @@
----
-layout: home
+# Controli
 
-title: Controli
-titleTemplate: Native Go CLI sharing
+Controli is a native Go CLI sharing tool for support sessions. A host starts a local shell, receives a 7-digit invite code, and a guest joins through an outbound Cloudflare WebSocket relay.
 
-hero:
-  name: Controli
-  text: Native CLI sharing for support sessions
-  tagline: Share a real terminal through an outbound Cloudflare relay with a short invite code and a browser-based guest terminal.
-  image:
-    src: /logo.svg
-    alt: Controli
-  actions:
-    - theme: brand
-      text: Get Started
-      link: /install
-    - theme: alt
-      text: View on GitHub
-      link: https://github.com/rgcsekaraa/controli
+## Current Scope
 
-features:
-  - title: Simple session codes
-    details: Start a host share, send a 7-digit code, and let the guest join without inbound ports.
-  - title: Browser terminal renderer
-    details: Guests use an embedded xterm.js terminal for consistent behavior across Windows, macOS, and Linux.
-  - title: Native Go binaries
-    details: Release assets are built for common desktop and server platforms with no runtime installer required.
-  - title: Cloudflare relay
-    details: The bundled Worker handles rendezvous, short-code lookup, and WebSocket forwarding.
----
+| Area | Status |
+| --- | --- |
+| Host support | macOS and Linux with a real PTY |
+| Guest support | Windows, macOS, and Linux |
+| Relay | Cloudflare Worker with Durable Objects |
+| Guest terminal | Browser terminal using xterm.js |
+| Windows hosting | Planned via ConPTY |
 
 ## Quick Start
 
-Configure the relay:
+Configure the relay URL once:
 
 ```bash
 controli relay configure --url wss://controli-relay.example.workers.dev
 ```
 
-Start a host session:
+Start a host session and print an invite code:
 
 ```bash
 controli host share --workspace main --minutes 480
 ```
 
-Join from another machine:
+Join from the guest machine:
 
 ```bash
 controli join 1234567
 ```
 
-## What To Read Next
+## Documentation
 
-- [Install](install.md)
-- [Host](host.md)
-- [Join](join.md)
-- [Security](security.md)
+- [Install](install.md): download releases and build from source.
+- [Host](host.md): configure a workspace and start sharing.
+- [Join](join.md): connect from Windows, macOS, or Linux.
+- [Relay](relay.md): deploy and operate the Cloudflare relay.
+- [Protocol](protocol.md): understand session routing and terminal transport.
+- [Security](security.md): review the permission model and operational limits.
+
+## Operational Notes
+
+- The invite code is temporary and should be treated like a password.
+- The guest controls the hosted shell for the lifetime of the session.
+- The relay does not require inbound ports on the host machine.
+- Use a relay deployed in your own Cloudflare account for production use.

@@ -3,16 +3,17 @@
   --vp-c-brand-2: #0d9488;
   --vp-c-brand-3: #14b8a6;
   --vp-c-brand-soft: rgba(20, 184, 166, 0.14);
-  --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: linear-gradient(120deg, #0f766e 0%, #2563eb 100%);
-  --vp-home-hero-image-background-image: linear-gradient(135deg, rgba(15, 118, 110, 0.26), rgba(37, 99, 235, 0.18));
-  --vp-home-hero-image-filter: blur(48px);
   --vp-font-family-base: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --vp-code-block-bg: #0b1220;
 }
 
-.VPHome .VPFeature {
-  border-radius: 8px;
+.VPButton,
+.DocSearch-Button,
+.VPSwitch,
+.VPNavBar .logo,
+.VPFeature,
+.vp-doc div[class*='language-'] {
+  border-radius: 2px;
 }
 
 .VPDoc h2 {
@@ -20,11 +21,33 @@
   margin-top: 36px;
 }
 
-.VPDoc table {
-  display: table;
+.vp-doc table {
+  table-layout: fixed;
   width: 100%;
+  font-size: 14px;
+}
+
+.vp-doc th,
+.vp-doc td {
+  border: 1px solid var(--vp-c-divider);
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.vp-doc tr:nth-child(2n) {
+  background-color: transparent;
 }
 
 .vp-doc div[class*='language-'] {
-  border-radius: 8px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 640px) {
+  .vp-doc div[class*='language-'] pre,
+  .vp-doc div[class*='language-'] code,
+  .vp-doc div[class*='language-'] .line {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
 }
