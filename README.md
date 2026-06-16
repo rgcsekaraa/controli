@@ -18,9 +18,18 @@ Download a binary from the latest release:
 ```text
 controli-darwin-arm64
 controli-darwin-amd64
+controli-linux-386
 controli-linux-amd64
+controli-linux-armv6
+controli-linux-armv7
 controli-linux-arm64
+controli-linux-ppc64le
+controli-linux-riscv64
+controli-linux-s390x
+controli-windows-386.exe
 controli-windows-amd64.exe
+controli-windows-arm.exe
+controli-windows-arm64.exe
 ```
 
 Release page:
@@ -38,14 +47,14 @@ https://rgcsekaraa.github.io/controli/
 Windows example:
 
 ```powershell
-Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/download/v0.2.1-go-alpha/controli-windows-amd64.exe" -OutFile "$env:USERPROFILE\Downloads\controli.exe"
+Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-windows-amd64.exe" -OutFile "$env:USERPROFILE\Downloads\controli.exe"
 & "$env:USERPROFILE\Downloads\controli.exe" join 1234567
 ```
 
 macOS arm64 example:
 
 ```bash
-curl -L -o controli https://github.com/rgcsekaraa/controli/releases/download/v0.2.1-go-alpha/controli-darwin-arm64
+curl -L -o controli https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-darwin-arm64
 chmod +x controli
 ./controli join 1234567
 ```
@@ -53,7 +62,7 @@ chmod +x controli
 Ubuntu/Linux example:
 
 ```bash
-curl -L -o controli https://github.com/rgcsekaraa/controli/releases/download/v0.2.1-go-alpha/controli-linux-amd64
+curl -L -o controli https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-amd64
 chmod +x controli
 ./controli join 1234567
 ```
@@ -128,9 +137,18 @@ This builds:
 ```text
 dist/controli-darwin-arm64
 dist/controli-darwin-amd64
+dist/controli-linux-386
 dist/controli-linux-amd64
+dist/controli-linux-armv6
+dist/controli-linux-armv7
 dist/controli-linux-arm64
+dist/controli-linux-ppc64le
+dist/controli-linux-riscv64
+dist/controli-linux-s390x
+dist/controli-windows-386.exe
 dist/controli-windows-amd64.exe
+dist/controli-windows-arm.exe
+dist/controli-windows-arm64.exe
 ```
 
 ## Security Notes

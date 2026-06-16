@@ -40,6 +40,7 @@ export default defineConfig({
           { text: 'Introduction', link: '/' },
           { text: 'Overview', link: '/overview' },
           { text: 'Install', link: '/install' },
+          { text: 'Compatibility', link: '/compatibility' },
           { text: 'Configuration', link: '/configuration' },
           { text: 'State', link: '/state' }
         ]

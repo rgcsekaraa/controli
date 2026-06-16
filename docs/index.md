@@ -35,6 +35,7 @@ controli join 1234567
 ## Documentation
 
 - [Install](install.md): download releases and build from source.
+- [Compatibility](compatibility.md): choose the right binary for each OS and CPU.
 - [Host](host.md): configure a workspace and start sharing.
 - [Join](join.md): connect from Windows, macOS, or Linux.
 - [Relay](relay.md): deploy and operate the Cloudflare relay.
