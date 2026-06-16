@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Controli logo">
+  <rect width="64" height="64" rx="12" fill="#0b1220"/>
+  <path d="M16 20h32v24H16z" fill="#0f766e"/>
+  <path d="M21 26l7 6-7 6" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M32 40h12" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+</svg>

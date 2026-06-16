@@ -1,10 +1,13 @@
-.PHONY: test build clean
+.PHONY: test build docs clean
 
 GO ?= go
 GOFLAGS ?=
 
 test:
 	CGO_ENABLED=0 $(GO) test ./...
+
+docs:
+	npm run docs:build
 
 build:
 	mkdir -p dist

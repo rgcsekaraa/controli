@@ -29,6 +29,12 @@ Release page:
 https://github.com/rgcsekaraa/controli/releases
 ```
 
+Documentation site:
+
+```text
+https://rgcsekaraa.github.io/controli/
+```
+
 Windows example:
 
 ```powershell
@@ -137,6 +143,7 @@ dist/controli-windows-amd64.exe
 
 ## More Docs
 
+- [Documentation site](https://rgcsekaraa.github.io/controli/)
 - [Overview](docs/overview.md)
 - [Install](docs/install.md)
 - [Relay](docs/relay.md)

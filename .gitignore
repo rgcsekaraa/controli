@@ -1,10 +1,7 @@
 build/
 dist/
-
-# Virtual environments
-.venv/
-venv/
-env/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
 
 # Node
 node_modules/
