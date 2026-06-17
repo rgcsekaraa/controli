@@ -14,10 +14,6 @@ import (
 	"github.com/creack/pty"
 )
 
-const (
-	ptyChunkSize = 64 * 1024
-)
-
 func shellArgs(shell string) []string {
 	name := strings.ToLower(filepath.Base(shell))
 	switch name {
@@ -45,11 +41,23 @@ func shellEnv() []string {
 }
 
 func RunHostRelayShell(relayURL, sessionID, secret, cwd, shell string) int {
+	return RunHostRelayShellWithOptions(HostOptions{
+		RelayURL:  relayURL,
+		SessionID: sessionID,
+		Secret:    secret,
+		Cwd:       cwd,
+		Shell:     shell,
+		Mode:      HostModeFull,
+	})
+}
+
+func RunHostRelayShellWithOptions(options HostOptions) int {
+	shell := options.Shell
 	if shell == "" {
 		shell = DefaultShell()
 	}
 	command := exec.Command(shellArgs(shell)[0], shellArgs(shell)[1:]...)
-	command.Dir = cwd
+	command.Dir = options.Cwd
 	command.Env = shellEnv()
 	tty, err := pty.StartWithSize(command, &pty.Winsize{Rows: 24, Cols: 80})
 	if err != nil {
@@ -58,14 +66,32 @@ func RunHostRelayShell(relayURL, sessionID, secret, cwd, shell string) int {
 	}
 	defer func() { _ = tty.Close() }()
 
-	relay := NewRelayClient(relayURL, sessionID, secret)
+	relay := NewRelayClient(options.RelayURL, options.SessionID, options.Secret)
 	if err := relay.Connect(SideHost); err != nil {
 		_, _ = os.Stderr.WriteString("failed to connect relay: " + err.Error() + "\n")
 		return 1
 	}
+	audit, err := OpenAuditLog(options.AuditLogPath)
+	if err != nil {
+		_, _ = os.Stderr.WriteString("failed to open audit log: " + err.Error() + "\n")
+		return 1
+	}
+	defer audit.Close()
+	audit.Log("host_start", map[string]any{
+		"session_id": options.SessionID,
+		"workspace":  options.WorkspaceName,
+		"cwd":        options.Cwd,
+		"shell":      shell,
+		"mode":       options.Mode,
+	})
+	stats := NewSessionStats()
+	gate := NewHostGate(options.Mode, options.RequireApprove)
 	stop := make(chan struct{})
 	if peer, err := relay.peer(SideHost); err == nil {
 		go peer.KeepAlive(stop)
+	}
+	if options.StatusInterval > 0 {
+		go hostStatusLoop(stop, options.StatusInterval, stats)
 	}
 
 	go func() {
@@ -73,6 +99,8 @@ func RunHostRelayShell(relayURL, sessionID, secret, cwd, shell string) int {
 		for {
 			n, err := tty.Read(buffer)
 			if n > 0 {
+				stats.AddOutput(n)
+				audit.Log("output", map[string]any{"bytes": n})
 				_ = relay.Send(SideHost, buffer[:n])
 			}
 			if err != nil {
@@ -88,9 +116,17 @@ func RunHostRelayShell(relayURL, sessionID, secret, cwd, shell string) int {
 				_ = command.Process.Signal(syscall.SIGTERM)
 				return
 			}
-			if handleHostControl(tty, data) {
+			if handleHostControl(tty, data, audit) {
 				continue
 			}
+			allowed, notice := gate.AllowInput(data, audit, options.AuditInput)
+			if notice != "" {
+				_ = relay.Send(SideHost, []byte(notice))
+			}
+			if !allowed {
+				continue
+			}
+			stats.AddInput(len(data))
 			_, _ = tty.Write(data)
 		}
 	}()
@@ -98,6 +134,7 @@ func RunHostRelayShell(relayURL, sessionID, secret, cwd, shell string) int {
 	err = command.Wait()
 	close(stop)
 	relay.Close(SideHost)
+	audit.Log("host_stop", map[string]any{"stats": stats.Summary()})
 	if err == nil {
 		return 0
 	}
@@ -108,20 +145,17 @@ func RunHostRelayShell(relayURL, sessionID, secret, cwd, shell string) int {
 	return 1
 }
 
-func handleHostControl(tty *os.File, data []byte) bool {
+func handleHostControl(tty *os.File, data []byte, audit *AuditLog) bool {
 	if !strings.HasPrefix(string(data), ControlPrefix) {
 		return false
 	}
-	var payload struct {
-		Type    string `json:"type"`
-		Columns uint16 `json:"columns"`
-		Rows    uint16 `json:"rows"`
-	}
+	var payload ControlMessage
 	if err := json.Unmarshal(data[len(ControlPrefix):], &payload); err != nil {
 		return false
 	}
 	if payload.Type == "resize" && payload.Columns > 0 && payload.Rows > 0 {
 		_ = pty.Setsize(tty, &pty.Winsize{Rows: payload.Rows, Cols: payload.Columns})
+		audit.Log("resize", map[string]any{"columns": payload.Columns, "rows": payload.Rows})
 	}
 	return true
 }

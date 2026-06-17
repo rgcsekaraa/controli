@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -24,6 +25,8 @@ func main() {
 		code = cmdHost(os.Args[2:])
 	case "join":
 		code = cmdJoin(os.Args[2:])
+	case "update":
+		code = cmdUpdate(os.Args[2:])
 	default:
 		usage()
 		code = 2
@@ -31,12 +34,27 @@ func main() {
 	os.Exit(code)
 }
 
+func cmdUpdate(args []string) int {
+	flags := flag.NewFlagSet("update", flag.ContinueOnError)
+	repo := flags.String("repo", controli.DefaultGitHubRepo, "GitHub repo in owner/name form")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if err := controli.UpdateFromLatestRelease(*repo, os.Stdout); err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		return 1
+	}
+	return 0
+}
+
 func usage() {
 	fmt.Fprintln(os.Stderr, "usage:")
 	fmt.Fprintln(os.Stderr, "  controli relay configure --url wss://<relay>")
 	fmt.Fprintln(os.Stderr, "  controli relay status")
+	fmt.Fprintln(os.Stderr, "  controli relay deploy")
 	fmt.Fprintln(os.Stderr, "  controli host share --workspace <name>")
 	fmt.Fprintln(os.Stderr, "  controli join <code>")
+	fmt.Fprintln(os.Stderr, "  controli update")
 }
 
 func cmdRelay(args []string) int {
@@ -78,6 +96,32 @@ func cmdRelay(args []string) int {
 			return 0
 		}
 		fmt.Println("relay_url:", state.Relay.URL)
+		health, err := controli.NewRelayClient(state.Relay.URL, "health", "health").Health()
+		if err != nil {
+			fmt.Println("health: unreachable")
+			fmt.Println("error:", err)
+			return 1
+		}
+		fmt.Println("health:", health["ok"])
+		if service, ok := health["service"].(string); ok {
+			fmt.Println("service:", service)
+		}
+		return 0
+	case "deploy":
+		dir := filepath.Join("infra", "cloudflare-relay")
+		if _, err := os.Stat(filepath.Join(dir, "package.json")); err != nil {
+			fmt.Fprintln(os.Stderr, "error: relay deploy must be run from the Controli source checkout")
+			return 1
+		}
+		command := exec.Command("npm", "run", "deploy")
+		command.Dir = dir
+		command.Stdout = os.Stdout
+		command.Stderr = os.Stderr
+		command.Stdin = os.Stdin
+		if err := command.Run(); err != nil {
+			fmt.Fprintln(os.Stderr, "error:", err)
+			return 1
+		}
 		return 0
 	default:
 		usage()
@@ -92,12 +136,18 @@ func cmdHost(args []string) int {
 	}
 	flags := flag.NewFlagSet("host share", flag.ContinueOnError)
 	workspaceName := flags.String("workspace", "", "workspace name")
+	room := flags.String("room", "", "room name shown to the guest")
 	relayURL := flags.String("relay-url", "", "relay URL")
 	name := flags.String("name", "guest", "guest name")
 	minutes := flags.Int("minutes", 120, "invite lifetime in minutes")
 	shell := flags.String("shell", "", "shell path")
 	printOnly := flags.Bool("print-only", false, "print code without starting shell")
 	longCode := flags.Bool("long-code", false, "print full self-contained code")
+	modeValue := flags.String("mode", "full", "permission mode: full, view, approve")
+	approve := flags.Bool("approve", true, "ask host before guest control starts")
+	auditLog := flags.String("audit-log", "", "audit log path, or off")
+	auditInput := flags.Bool("audit-input", false, "record typed input in the audit log")
+	statusInterval := flags.Duration("status-interval", 0, "print host session status on an interval, for example 30s")
 	if err := flags.Parse(args[1:]); err != nil {
 		return 2
 	}
@@ -120,6 +170,11 @@ func cmdHost(args []string) int {
 		fmt.Fprintln(os.Stderr, "error: relay URL is not configured")
 		return 1
 	}
+	mode, err := controli.ParseHostMode(*modeValue)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		return 1
+	}
 	sessionID, err := controli.NewRandomURLToken(12)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
@@ -136,6 +191,8 @@ func cmdHost(args []string) int {
 		Version:   1,
 		SessionID: sessionID,
 		Name:      *name,
+		Room:      firstNonEmpty(*room, *workspaceName),
+		Mode:      string(mode),
 		RelayURL:  activeRelayURL,
 		Secret:    secret,
 		ExpiresAt: expiresAt,
@@ -164,8 +221,33 @@ func cmdHost(args []string) int {
 	}
 	path := expandHome(workspace.Path)
 	activeShell := firstNonEmpty(*shell, workspace.Shell, controli.DefaultShell())
+	activeAuditLog := strings.TrimSpace(*auditLog)
+	if activeAuditLog == "" {
+		activeAuditLog = controli.DefaultAuditLogPath(sessionID)
+	}
+	if strings.EqualFold(activeAuditLog, "off") || strings.EqualFold(activeAuditLog, "none") {
+		activeAuditLog = ""
+	}
 	fmt.Println("relay session is ready; send the code to the guest and keep this process running")
-	return controli.RunHostRelayShell(activeRelayURL, sessionID, secret, path, activeShell)
+	fmt.Println("room:", firstNonEmpty(*room, *workspaceName))
+	fmt.Println("permission_mode:", mode)
+	if activeAuditLog != "" {
+		fmt.Println("audit_log:", activeAuditLog)
+	}
+	return controli.RunHostRelayShellWithOptions(controli.HostOptions{
+		RelayURL:       activeRelayURL,
+		SessionID:      sessionID,
+		Secret:         secret,
+		Cwd:            path,
+		Shell:          activeShell,
+		WorkspaceName:  *workspaceName,
+		GuestName:      *name,
+		Mode:           mode,
+		RequireApprove: *approve,
+		AuditLogPath:   activeAuditLog,
+		AuditInput:     *auditInput,
+		StatusInterval: *statusInterval,
+	})
 }
 
 func registerShortInvite(relayURL string, token controli.RelayToken) (string, error) {
@@ -210,6 +292,12 @@ func cmdJoin(args []string) int {
 	if controli.IsExpired(token.ExpiresAt) {
 		fmt.Fprintln(os.Stderr, "error: client code is expired")
 		return 1
+	}
+	if token.Room != "" {
+		fmt.Fprintln(os.Stderr, "room:", token.Room)
+	}
+	if token.Mode != "" {
+		fmt.Fprintln(os.Stderr, "permission_mode:", token.Mode)
 	}
 	if *webTerminal || (controli.UseWebTerminalByDefault() && !*console) {
 		return controli.RunWebRelayClient(token.RelayURL, token.SessionID, token.Secret)

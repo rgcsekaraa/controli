@@ -21,6 +21,7 @@ const (
 	SideClient        = "client"
 	FinalCloseReason  = "controli-final-close"
 	RelayPollInterval = 15 * time.Second
+	MaxReconnectDelay = 5 * time.Second
 	ControlPrefix     = "\x00CONTROLI:"
 )
 
@@ -86,13 +87,37 @@ func (c *RelayClient) ClaimInvite(code string) (RelayToken, error) {
 	return token, err
 }
 
+func (c *RelayClient) Health() (map[string]any, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.Timeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.httpURL()+"/health", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "controli-go")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	data, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("relay returned HTTP %d: %s", resp.StatusCode, string(data))
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return nil, err
+	}
+	return payload, nil
+}
+
 func (c *RelayClient) peer(side string) (*RelayPeer, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if peer := c.peers[side]; peer != nil {
 		return peer, nil
 	}
-	peer := &RelayPeer{client: c, side: side}
+	peer := &RelayPeer{client: c, side: side, closeCh: make(chan struct{})}
 	if err := peer.connect(); err != nil {
 		return nil, err
 	}
@@ -172,16 +197,31 @@ type RelayPeer struct {
 
 	mu   sync.Mutex
 	conn *websocket.Conn
+
+	closeCh chan struct{}
 }
 
 func (p *RelayPeer) connect() error {
+	return p.connectWithLimit(8)
+}
+
+func (p *RelayPeer) reconnect() error {
+	return p.connectWithLimit(0)
+}
+
+func (p *RelayPeer) connectWithLimit(limit int) error {
 	target, err := p.client.websocketURL(p.side)
 	if err != nil {
 		return err
 	}
 	var lastErr error
 	delay := 250 * time.Millisecond
-	for attempt := 0; attempt < 8; attempt++ {
+	for attempt := 0; limit == 0 || attempt < limit; attempt++ {
+		select {
+		case <-p.closeCh:
+			return io.EOF
+		default:
+		}
 		dialer := websocket.Dialer{HandshakeTimeout: p.client.Timeout}
 		conn, _, err := dialer.Dial(target, http.Header{"User-Agent": []string{"controli-go"}})
 		if err == nil {
@@ -189,10 +229,14 @@ func (p *RelayPeer) connect() error {
 			return nil
 		}
 		lastErr = err
-		time.Sleep(delay)
+		select {
+		case <-p.closeCh:
+			return io.EOF
+		case <-time.After(delay):
+		}
 		delay *= 2
-		if delay > 5*time.Second {
-			delay = 5 * time.Second
+		if delay > MaxReconnectDelay {
+			delay = MaxReconnectDelay
 		}
 	}
 	return fmt.Errorf("could not connect to relay after retries: %w", lastErr)
@@ -208,7 +252,7 @@ func (p *RelayPeer) Send(messageType int, data []byte) error {
 	}
 	if err := p.conn.WriteMessage(messageType, data); err != nil {
 		_ = p.conn.Close()
-		if err := p.connect(); err != nil {
+		if err := p.reconnect(); err != nil {
 			return err
 		}
 		return p.conn.WriteMessage(messageType, data)
@@ -238,7 +282,7 @@ func (p *RelayPeer) Read() ([]byte, error) {
 			p.mu.Lock()
 			_ = conn.Close()
 			p.conn = nil
-			err = p.connect()
+			err = p.reconnect()
 			p.mu.Unlock()
 			if err != nil {
 				return nil, err
@@ -265,6 +309,7 @@ func (p *RelayPeer) KeepAlive(stop <-chan struct{}) {
 }
 
 func (p *RelayPeer) Close() {
+	closeOnce(p.closeCh)
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if p.conn == nil {

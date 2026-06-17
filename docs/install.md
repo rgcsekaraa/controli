@@ -59,14 +59,14 @@ Download the binary that matches the guest or host machine. The current release 
 Windows, most PCs:
 
 ```powershell
-Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-windows-amd64.exe" -OutFile "$env:USERPROFILE\Downloads\controli.exe"
+Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/latest/download/controli-windows-amd64.exe" -OutFile "$env:USERPROFILE\Downloads\controli.exe"
 & "$env:USERPROFILE\Downloads\controli.exe" join 1234567
 ```
 
 macOS, Apple Silicon:
 
 ```bash
-curl -L -o controli https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-darwin-arm64
+curl -L -o controli https://github.com/rgcsekaraa/controli/releases/latest/download/controli-darwin-arm64
 chmod +x controli
 ./controli join 1234567
 ```
@@ -74,9 +74,29 @@ chmod +x controli
 Linux or Ubuntu, most PCs and servers:
 
 ```bash
-curl -L -o controli https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-amd64
+curl -L -o controli https://github.com/rgcsekaraa/controli/releases/latest/download/controli-linux-amd64
 chmod +x controli
 ./controli join 1234567
 ```
 
 After downloading on Unix systems, mark the file executable with `chmod +x`.
+
+## One-command install
+
+macOS and Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rgcsekaraa/controli/main/scripts/install.sh | sh
+```
+
+Windows:
+
+```powershell
+iwr https://raw.githubusercontent.com/rgcsekaraa/controli/main/scripts/install.ps1 -UseB | iex
+```
+
+Update later:
+
+```bash
+controli update
+```

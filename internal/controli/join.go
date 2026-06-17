@@ -61,14 +61,17 @@ func (w relayWriter) Write(p []byte) (int, error) {
 }
 
 type WebTerminalBridge struct {
-	relay    *RelayClient
-	token    string
-	stop     chan struct{}
-	clients  map[*websocket.Conn]*sync.Mutex
-	pending  [][]byte
-	mu       sync.Mutex
-	upgrader websocket.Upgrader
+	relay        *RelayClient
+	token        string
+	stop         chan struct{}
+	clients      map[*websocket.Conn]*sync.Mutex
+	pending      [][]byte
+	pendingBytes int
+	mu           sync.Mutex
+	upgrader     websocket.Upgrader
 }
+
+const maxWebPendingBytes = 16 * 1024 * 1024
 
 func NewWebTerminalBridge(relay *RelayClient, token string) *WebTerminalBridge {
 	return &WebTerminalBridge{
@@ -148,6 +151,7 @@ func (b *WebTerminalBridge) addClient(conn *websocket.Conn) {
 	b.clients[conn] = &sync.Mutex{}
 	pending := append([][]byte(nil), b.pending...)
 	b.pending = nil
+	b.pendingBytes = 0
 	b.mu.Unlock()
 	for _, data := range pending {
 		b.writeClient(conn, data)
@@ -181,8 +185,10 @@ func (b *WebTerminalBridge) broadcast(data []byte) {
 	if len(clients) == 0 {
 		copied := append([]byte(nil), data...)
 		b.pending = append(b.pending, copied)
-		if len(b.pending) > 512 {
-			b.pending = b.pending[len(b.pending)-512:]
+		b.pendingBytes += len(copied)
+		for len(b.pending) > 512 || b.pendingBytes > maxWebPendingBytes {
+			b.pendingBytes -= len(b.pending[0])
+			b.pending = b.pending[1:]
 		}
 		b.mu.Unlock()
 		return

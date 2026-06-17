@@ -11,6 +11,8 @@ interface InvitePayload {
   code: string;
   session_id: string;
   name: string;
+  room?: string;
+  mode?: string;
   relay_url: string;
   secret: string;
   expires_at: string;
@@ -21,6 +23,7 @@ const SIDES = new Set(["host", "client"]);
 const FINAL_CLOSE_CODE = 1000;
 const FINAL_CLOSE_REASON = "controli-final-close";
 const MAX_PENDING_MESSAGES = 2048;
+const MAX_PENDING_BYTES = 16 * 1024 * 1024;
 
 function jsonResponse(status: number, payload: object): Response {
   return new Response(JSON.stringify(payload), {
@@ -55,6 +58,8 @@ function buildInvite(payload: Record<string, unknown> | null): InvitePayload | n
   const code = textField(payload, "code");
   const sessionId = textField(payload, "session_id");
   const name = textField(payload, "name") ?? "guest";
+  const room = textField(payload, "room") ?? undefined;
+  const mode = textField(payload, "mode") ?? undefined;
   const relayUrl = textField(payload, "relay_url");
   const secret = textField(payload, "secret");
   const expiresAt = textField(payload, "expires_at");
@@ -68,6 +73,8 @@ function buildInvite(payload: Record<string, unknown> | null): InvitePayload | n
     code,
     session_id: sessionId,
     name,
+    room,
+    mode,
     relay_url: relayUrl,
     secret,
     expires_at: expiresAt,
@@ -85,7 +92,13 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/health") {
-      return jsonResponse(200, { ok: true });
+      return jsonResponse(200, {
+        ok: true,
+        service: "controli-relay",
+        websocket_path: "/v1/ws",
+        max_pending_messages: MAX_PENDING_MESSAGES,
+        max_pending_bytes: MAX_PENDING_BYTES,
+      });
     }
 
     if (url.pathname === "/v1/invite/register" && request.method === "POST") {
@@ -128,6 +141,22 @@ export default {
       }
       const id = env.SESSIONS.idFromName(sessionId);
       const object = env.SESSIONS.get(id);
+      return object.fetch(
+        new Request(request.url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payload),
+        }),
+      );
+    }
+
+    if (url.pathname === "/v1/session/status" && request.method === "POST") {
+      const payload = await request.json<Record<string, unknown>>().catch(() => null);
+      const sessionId = typeof payload?.session_id === "string" ? payload.session_id : null;
+      if (!sessionId) {
+        return jsonResponse(400, { error: "session_id is required" });
+      }
+      const object = env.SESSIONS.get(env.SESSIONS.idFromName(sessionId));
       return object.fetch(
         new Request(request.url, {
           method: "POST",
@@ -209,7 +238,14 @@ export class RelaySession implements DurableObject {
     ["host", []],
     ["client", []],
   ]);
+  private pendingBytes: Map<Side, number> = new Map([
+    ["host", 0],
+    ["client", 0],
+  ]);
   private secretHash: string | null = null;
+  private connectedAt: Map<Side, string> = new Map();
+  private lastActivityAt: string | null = null;
+  private droppedMessages = 0;
 
   constructor(state: DurableObjectState) {
     this.state = state;
@@ -220,6 +256,18 @@ export class RelaySession implements DurableObject {
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
+    if (url.pathname === "/v1/session/status" && request.method === "POST") {
+      const payload = await request.json<Record<string, unknown>>().catch(() => null);
+      const secret = typeof payload?.secret === "string" ? payload.secret : null;
+      if (!secret) {
+        return jsonResponse(400, { error: "secret is required" });
+      }
+      if (!(await this.authorize(secret))) {
+        return jsonResponse(403, { error: "invalid session secret" });
+      }
+      return jsonResponse(200, this.status());
+    }
+
     if (url.pathname === "/v1/close" && request.method === "POST") {
       const payload = await request.json<Record<string, unknown>>().catch(() => null);
       const secret = typeof payload?.secret === "string" ? payload.secret : null;
@@ -270,6 +318,7 @@ export class RelaySession implements DurableObject {
 
     socket.accept();
     this.sockets.set(side, socket);
+    this.connectedAt.set(side, new Date().toISOString());
     this.flush(side);
 
     socket.addEventListener("message", (event) => {
@@ -285,6 +334,7 @@ export class RelaySession implements DurableObject {
   private detach(side: Side, code: number, reason: string): void {
     const socket = this.sockets.get(side);
     this.sockets.delete(side);
+    this.connectedAt.delete(side);
     const finalClose = code === FINAL_CLOSE_CODE && reason === FINAL_CLOSE_REASON;
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.close(1000, "closed");
@@ -300,6 +350,7 @@ export class RelaySession implements DurableObject {
 
   private async forward(from: Side, data: unknown): Promise<void> {
     const payload = await normalizePayload(data);
+    this.lastActivityAt = new Date().toISOString();
     this.deliver(peerSide(from), payload);
   }
 
@@ -310,9 +361,15 @@ export class RelaySession implements DurableObject {
       return;
     }
     const queue = this.pending.get(to) ?? [];
+    const bytes = payloadBytes(payload);
     queue.push(payload);
-    while (queue.length > MAX_PENDING_MESSAGES) {
-      queue.shift();
+    this.pendingBytes.set(to, (this.pendingBytes.get(to) ?? 0) + bytes);
+    while (queue.length > MAX_PENDING_MESSAGES || (this.pendingBytes.get(to) ?? 0) > MAX_PENDING_BYTES) {
+      const dropped = queue.shift();
+      if (dropped !== undefined) {
+        this.pendingBytes.set(to, Math.max(0, (this.pendingBytes.get(to) ?? 0) - payloadBytes(dropped)));
+        this.droppedMessages += 1;
+      }
     }
     this.pending.set(to, queue);
   }
@@ -327,6 +384,7 @@ export class RelaySession implements DurableObject {
       const payload = queue.shift();
       if (payload !== undefined) {
         socket.send(payload);
+        this.pendingBytes.set(side, Math.max(0, (this.pendingBytes.get(side) ?? 0) - payloadBytes(payload)));
       }
     }
   }
@@ -335,16 +393,53 @@ export class RelaySession implements DurableObject {
     for (const current of [side, peerSide(side)] as Side[]) {
       const socket = this.sockets.get(current);
       this.sockets.delete(current);
+      this.connectedAt.delete(current);
       this.pending.set(current, []);
+      this.pendingBytes.set(current, 0);
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.close(FINAL_CLOSE_CODE, `${side} disconnected`);
       }
     }
   }
+
+  private status(): object {
+    return {
+      ok: true,
+      connected: {
+        host: this.sockets.has("host"),
+        client: this.sockets.has("client"),
+      },
+      connected_at: {
+        host: this.connectedAt.get("host") ?? null,
+        client: this.connectedAt.get("client") ?? null,
+      },
+      pending_messages: {
+        host: this.pending.get("host")?.length ?? 0,
+        client: this.pending.get("client")?.length ?? 0,
+      },
+      pending_bytes: {
+        host: this.pendingBytes.get("host") ?? 0,
+        client: this.pendingBytes.get("client") ?? 0,
+      },
+      last_activity_at: this.lastActivityAt,
+      dropped_messages: this.droppedMessages,
+      limits: {
+        max_pending_messages: MAX_PENDING_MESSAGES,
+        max_pending_bytes: MAX_PENDING_BYTES,
+      },
+    };
+  }
 }
 
 function peerSide(side: Side): Side {
   return side === "host" ? "client" : "host";
+}
+
+function payloadBytes(payload: RelayPayload): number {
+  if (typeof payload === "string") {
+    return new TextEncoder().encode(payload).byteLength;
+  }
+  return payload.byteLength;
 }
 
 async function sha256(value: string): Promise<string> {

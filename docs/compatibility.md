@@ -8,7 +8,7 @@ Controli targets operating systems and CPU architectures supported by the Go too
 
 The intended support goal is:
 
-- Current and recent Windows versions for joining sessions.
+- Current and recent Windows versions for joining sessions and best-effort hosting.
 - Intel and Apple Silicon Macs for hosting and joining.
 - Common Ubuntu and Linux systems for hosting and joining.
 - Additional Linux server and board architectures where Go can build the binary.
@@ -27,12 +27,12 @@ The intended support goal is:
 | Linux ppc64le | Yes | Best effort |
 | Linux riscv64 | Yes | Best effort |
 | Linux s390x | Yes | Best effort |
-| Windows amd64 | Yes | Planned |
-| Windows 386 | Yes | Planned |
-| Windows arm | Yes | Planned |
-| Windows arm64 | Yes | Planned |
+| Windows amd64 | Yes | Best effort |
+| Windows 386 | Yes | Best effort |
+| Windows arm | Yes | Best effort |
+| Windows arm64 | Yes | Best effort |
 
-Windows hosting needs ConPTY support and is intentionally blocked until that path is implemented. Windows joining works now through the browser terminal.
+macOS and Linux hosting use a real PTY. Windows hosting uses a stdio backend until ConPTY is added.
 
 ## Release Assets
 
@@ -57,6 +57,6 @@ Windows hosting needs ConPTY support and is intentionally blocked until that pat
 
 - Very old macOS releases may not run current Go-built binaries.
 - Very old Linux kernels may not run current Go-built binaries.
-- Windows hosting is not enabled until ConPTY support is added.
-- Host mode requires a working shell and PTY support.
+- Host mode requires a working shell.
+- macOS and Linux host mode requires PTY support.
 - Join mode requires outbound HTTPS and WebSocket access to the relay.

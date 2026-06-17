@@ -6,9 +6,8 @@ The current implementation is a native Go binary.
 
 ## Supported Platforms
 
-- Host: macOS and Linux/Ubuntu using a real PTY.
+- Host: macOS and Linux/Ubuntu using a real PTY. Windows hosting uses a stdio backend.
 - Guest: Windows, macOS, and Linux/Ubuntu.
-- Windows hosting: planned via ConPTY; Windows joining works now.
 - Relay: Cloudflare Worker with Durable Objects.
 
 ## Install
@@ -39,7 +38,7 @@ https://rgcsekaraa.github.io/controli/
 Quick download:
 
 ```powershell
-Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-windows-amd64.exe" -OutFile "$env:USERPROFILE\Downloads\controli.exe"
+Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/latest/download/controli-windows-amd64.exe" -OutFile "$env:USERPROFILE\Downloads\controli.exe"
 & "$env:USERPROFILE\Downloads\controli.exe" join 1234567
 ```
 
@@ -53,7 +52,7 @@ Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/download
 Quick download for Apple Silicon:
 
 ```bash
-curl -L -o controli https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-darwin-arm64
+curl -L -o controli https://github.com/rgcsekaraa/controli/releases/latest/download/controli-darwin-arm64
 chmod +x controli
 ./controli join 1234567
 ```
@@ -74,12 +73,30 @@ chmod +x controli
 Quick download for most PCs and servers:
 
 ```bash
-curl -L -o controli https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-amd64
+curl -L -o controli https://github.com/rgcsekaraa/controli/releases/latest/download/controli-linux-amd64
 chmod +x controli
 ./controli join 1234567
 ```
 
 After downloading on Unix systems, mark the file executable with `chmod +x`.
+
+One-command install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rgcsekaraa/controli/main/scripts/install.sh | sh
+```
+
+Windows one-command install:
+
+```powershell
+iwr https://raw.githubusercontent.com/rgcsekaraa/controli/main/scripts/install.ps1 -UseB | iex
+```
+
+Update later:
+
+```bash
+controli update
+```
 
 ## Relay Setup
 
@@ -89,7 +106,7 @@ Deploy the bundled Cloudflare Worker once:
 cd infra/cloudflare-relay
 npm install
 npx wrangler login
-npx wrangler deploy
+controli relay deploy
 ```
 
 Configure the relay URL on the host:
@@ -120,10 +137,18 @@ Controli reads workspaces from `~/.controli/state.json`. Minimal example:
 Start sharing:
 
 ```bash
-controli host share --workspace main --minutes 480
+controli host share --workspace main --minutes 480 --mode full
 ```
 
 Send the printed 7-digit code to the guest.
+
+Permission modes:
+
+- `full`: guest can type after host approval.
+- `view`: guest can watch but input is blocked.
+- `approve`: host approves each input chunk before it reaches the shell.
+
+Audit logs are written to `~/.controli/audit/<session>.jsonl` by default. Add `--audit-input` only when recording typed input is acceptable.
 
 ## Guest Join
 
@@ -170,7 +195,8 @@ dist/controli-windows-arm64.exe
 - Treat the 7-digit code like a password while it is valid.
 - Use a Cloudflare Worker account you control.
 - The relay sees encrypted WebSocket transport metadata but does not need host inbound ports.
-- The guest controls the hosted shell for the lifetime of the session.
+- The host is prompted before guest control starts unless `--approve=false` is used.
+- Use `--mode view` when the guest should only watch.
 - This is alpha software. Use it on machines you own or are authorized to administer.
 
 ## Documentation
