@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Controli documentation preview">
+  <rect width="1200" height="630" fill="#17181d"/>
+  <rect x="76" y="72" width="1048" height="486" fill="#202128"/>
+  <rect x="108" y="104" width="80" height="80" rx="6" fill="#0b1220"/>
+  <rect x="128" y="132" width="40" height="28" rx="2" fill="#0f766e"/>
+  <path d="M135 139l10 7-10 7v-5l4-2-4-2z" fill="#fff"/>
+  <rect x="149" y="152" width="13" height="4" rx="2" fill="#fff"/>
+  <text x="220" y="146" fill="#efefe7" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="46" font-weight="700">Controli</text>
+  <text x="220" y="194" fill="#a4a6ae" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25">CLI sharing for support sessions</text>
+  <text x="108" y="310" fill="#efefe7" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="56" font-weight="760">Share a terminal with a 7-digit code</text>
+  <text x="108" y="374" fill="#c7c8ce" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="30">Native Go client, Cloudflare relay, Windows, macOS, and Linux guests.</text>
+  <rect x="108" y="438" width="520" height="64" fill="#111216"/>
+  <text x="136" y="480" fill="#5eead4" font-family="Menlo, Consolas, monospace" font-size="26">controli join 1234567</text>
+</svg>

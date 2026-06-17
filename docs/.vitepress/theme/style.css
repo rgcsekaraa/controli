@@ -85,6 +85,39 @@
   margin-top: 36px;
 }
 
+.download-grid {
+  display: grid;
+  gap: 18px;
+  margin: 24px 0 34px;
+}
+
+.download-card {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: var(--controli-radius);
+  padding: 20px;
+  background: var(--vp-c-bg-soft);
+}
+
+.download-card h2 {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.download-card p {
+  margin: 8px 0 16px;
+  color: var(--vp-c-text-2);
+}
+
+.download-card table {
+  margin: 0;
+  width: auto;
+  min-width: min(100%, 520px);
+  max-width: 100%;
+  background: transparent;
+  table-layout: auto;
+}
+
 .vp-doc table {
   table-layout: fixed;
   width: 100%;

@@ -1,11 +1,22 @@
 import { defineConfig } from 'vitepress'
 
 const siteUrl = 'https://rgcsekaraa.github.io/controli/'
+const basePath = '/controli/'
+const siteName = 'Controli'
+const siteTitle = 'Controli Documentation'
+const siteDescription = 'CLI sharing for support sessions through an outbound Cloudflare relay.'
+const ogImage = `${siteUrl}og-image.png`
+
+function pageUrl(page: string): string {
+  const clean = page.replace(/(^|\/)index\.md$/, '').replace(/\.md$/, '')
+  return new URL(clean, siteUrl).href
+}
 
 export default defineConfig({
-  title: 'Controli',
-  description: 'Native Go CLI sharing over an outbound Cloudflare relay.',
-  base: '/controli/',
+  title: siteName,
+  titleTemplate: ':title | Controli Docs',
+  description: siteDescription,
+  base: basePath,
   cleanUrls: true,
   appearance: 'force-auto',
   lastUpdated: true,
@@ -13,18 +24,42 @@ export default defineConfig({
     hostname: siteUrl
   },
   head: [
-    ['meta', { name: 'theme-color', content: '#0f766e' }],
-    ['meta', { name: 'keywords', content: 'Go CLI sharing, terminal sharing, remote terminal, Cloudflare relay, WebSocket terminal' }],
+    ['meta', { name: 'application-name', content: siteName }],
+    ['meta', { name: 'apple-mobile-web-app-title', content: siteName }],
+    ['meta', { name: 'theme-color', media: '(prefers-color-scheme: light)', content: '#ffffff' }],
+    ['meta', { name: 'theme-color', media: '(prefers-color-scheme: dark)', content: '#17181d' }],
+    ['meta', { name: 'keywords', content: 'CLI sharing, terminal sharing, remote terminal, Go CLI, Cloudflare relay, WebSocket terminal, support sessions' }],
+    ['meta', { name: 'robots', content: 'index,follow' }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'Controli Documentation' }],
-    ['meta', { property: 'og:description', content: 'Native Go CLI sharing over an outbound Cloudflare relay.' }],
-    ['meta', { property: 'og:url', content: siteUrl }],
-    ['meta', { property: 'og:site_name', content: 'Controli' }],
+    ['meta', { property: 'og:site_name', content: siteName }],
+    ['meta', { property: 'og:locale', content: 'en_US' }],
+    ['meta', { property: 'og:image', content: ogImage }],
+    ['meta', { property: 'og:image:width', content: '1200' }],
+    ['meta', { property: 'og:image:height', content: '630' }],
+    ['meta', { property: 'og:image:alt', content: 'Controli documentation preview' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'Controli Documentation' }],
-    ['meta', { name: 'twitter:description', content: 'Native Go CLI sharing over an outbound Cloudflare relay.' }],
-    ['link', { rel: 'canonical', href: siteUrl }]
+    ['meta', { name: 'twitter:image', content: ogImage }],
+    ['meta', { name: 'twitter:image:alt', content: 'Controli documentation preview' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: `${basePath}favicon.svg` }],
+    ['link', { rel: 'icon', href: `${basePath}favicon.ico`, sizes: 'any' }],
+    ['link', { rel: 'alternate icon', type: 'image/png', sizes: '32x32', href: `${basePath}favicon-32.png` }],
+    ['link', { rel: 'apple-touch-icon', sizes: '180x180', href: `${basePath}apple-touch-icon.png` }],
+    ['link', { rel: 'manifest', href: `${basePath}site.webmanifest` }]
   ],
+  transformHead({ page, title, description }) {
+    const url = pageUrl(page)
+    const metaTitle = title || siteTitle
+    const metaDescription = description || siteDescription
+
+    return [
+      ['link', { rel: 'canonical', href: url }],
+      ['meta', { property: 'og:title', content: metaTitle }],
+      ['meta', { property: 'og:description', content: metaDescription }],
+      ['meta', { property: 'og:url', content: url }],
+      ['meta', { name: 'twitter:title', content: metaTitle }],
+      ['meta', { name: 'twitter:description', content: metaDescription }]
+    ]
+  },
   themeConfig: {
     logo: { src: '/logo.svg', alt: 'Controli' },
     siteTitle: 'Controli',

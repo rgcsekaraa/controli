@@ -1,31 +1,69 @@
 # Install
 
-Use the binary that matches the target machine.
+Download the binary that matches the guest or host machine. The current release is [v0.2.0](https://github.com/rgcsekaraa/controli/releases/tag/v0.2.0).
 
-## Windows
+<div class="download-grid">
+  <section class="download-card">
+    <h2>Windows</h2>
+    <p>Use these when the other person is joining from a Windows machine.</p>
+    <table>
+      <thead>
+        <tr><th>Machine</th><th>Download</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Most Intel or AMD PCs</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-windows-amd64.exe">controli-windows-amd64.exe</a></td></tr>
+        <tr><td>Older 32-bit PCs</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-windows-386.exe">controli-windows-386.exe</a></td></tr>
+        <tr><td>Windows on ARM64</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-windows-arm64.exe">controli-windows-arm64.exe</a></td></tr>
+        <tr><td>Older Windows ARM devices</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-windows-arm.exe">controli-windows-arm.exe</a></td></tr>
+      </tbody>
+    </table>
+  </section>
 
-| Machine | Binary |
-| --- | --- |
-| Most Intel or AMD PCs | `controli-windows-amd64.exe` |
-| Older 32-bit PCs | `controli-windows-386.exe` |
-| Windows on ARM64 | `controli-windows-arm64.exe` |
-| Older Windows ARM devices | `controli-windows-arm.exe` |
+  <section class="download-card">
+    <h2>macOS</h2>
+    <p>Use these for Apple machines. Apple Silicon means M1, M2, M3, or newer.</p>
+    <table>
+      <thead>
+        <tr><th>Machine</th><th>Download</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Apple Silicon</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-darwin-arm64">controli-darwin-arm64</a></td></tr>
+        <tr><td>Intel Mac</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-darwin-amd64">controli-darwin-amd64</a></td></tr>
+      </tbody>
+    </table>
+  </section>
 
-Example:
+  <section class="download-card">
+    <h2>Linux and Ubuntu</h2>
+    <p>Use these for Ubuntu, Debian, Fedora, servers, boards, and other Linux systems.</p>
+    <table>
+      <thead>
+        <tr><th>Machine</th><th>Download</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Most Intel or AMD desktops and servers</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-amd64">controli-linux-amd64</a></td></tr>
+        <tr><td>Older 32-bit Intel or AMD systems</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-386">controli-linux-386</a></td></tr>
+        <tr><td>ARM64 servers and boards</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-arm64">controli-linux-arm64</a></td></tr>
+        <tr><td>ARMv7 boards</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-armv7">controli-linux-armv7</a></td></tr>
+        <tr><td>ARMv6 boards</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-armv6">controli-linux-armv6</a></td></tr>
+        <tr><td>PowerPC 64 little-endian servers</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-ppc64le">controli-linux-ppc64le</a></td></tr>
+        <tr><td>RISC-V 64 systems</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-riscv64">controli-linux-riscv64</a></td></tr>
+        <tr><td>IBM Z or LinuxONE</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-s390x">controli-linux-s390x</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+
+## Quick Download
+
+Windows, most PCs:
 
 ```powershell
 Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-windows-amd64.exe" -OutFile "$env:USERPROFILE\Downloads\controli.exe"
 & "$env:USERPROFILE\Downloads\controli.exe" join 1234567
 ```
 
-## macOS
-
-| Machine | Binary |
-| --- | --- |
-| Apple Silicon | `controli-darwin-arm64` |
-| Intel Mac | `controli-darwin-amd64` |
-
-Example:
+macOS, Apple Silicon:
 
 ```bash
 curl -L -o controli https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-darwin-arm64
@@ -33,20 +71,7 @@ chmod +x controli
 ./controli join 1234567
 ```
 
-## Linux and Ubuntu
-
-| Machine | Binary |
-| --- | --- |
-| Most Intel or AMD desktops and servers | `controli-linux-amd64` |
-| Older 32-bit Intel or AMD systems | `controli-linux-386` |
-| ARMv6 boards | `controli-linux-armv6` |
-| ARMv7 boards | `controli-linux-armv7` |
-| ARM64 servers and boards | `controli-linux-arm64` |
-| PowerPC 64 little-endian servers | `controli-linux-ppc64le` |
-| RISC-V 64 systems | `controli-linux-riscv64` |
-| IBM Z or LinuxONE | `controli-linux-s390x` |
-
-Example:
+Linux or Ubuntu, most PCs and servers:
 
 ```bash
 curl -L -o controli https://github.com/rgcsekaraa/controli/releases/download/v0.2.0/controli-linux-amd64
