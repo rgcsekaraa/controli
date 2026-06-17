@@ -26,6 +26,12 @@ Documentation site:
 https://rgcsekaraa.github.io/controli/
 ```
 
+Command reference:
+
+```text
+https://rgcsekaraa.github.io/controli/commands
+```
+
 ### Windows
 
 | Machine | Download |
@@ -163,6 +169,38 @@ Direct console rendering is available for debugging:
 ```bash
 controli join 1234567 --console
 ```
+
+## Command Reference
+
+Common host commands:
+
+```bash
+controli host share --workspace main --mode full
+controli host share --workspace main --mode view
+controli host share --workspace main --mode approve
+controli host share --workspace main --room support-a --status-interval 30s
+controli host share --workspace main --long-code
+controli host share --workspace main --print-only
+```
+
+Common guest commands:
+
+```bash
+controli join 1234567
+controli join 1234567 --console
+controli join 1234567 --web-terminal
+```
+
+Relay and update commands:
+
+```bash
+controli relay configure --url wss://controli-relay.<your-subdomain>.workers.dev
+controli relay status
+controli relay deploy
+controli update
+```
+
+Full command and flag documentation is in the [command reference](https://rgcsekaraa.github.io/controli/commands).
 
 ## Build From Source
 
