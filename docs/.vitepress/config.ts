@@ -7,6 +7,7 @@ export default defineConfig({
   description: 'Native Go CLI sharing over an outbound Cloudflare relay.',
   base: '/controli/',
   cleanUrls: true,
+  appearance: 'force-auto',
   lastUpdated: true,
   sitemap: {
     hostname: siteUrl
