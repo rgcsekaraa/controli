@@ -3,6 +3,7 @@
 package controli
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"os"
@@ -87,7 +88,7 @@ func RunHostRelayShellWithOptions(options HostOptions) int {
 				_ = command.Process.Kill()
 				return
 			}
-			if isWindowsIgnoredControl(data, audit) {
+			if handleWindowsHostControl(data, audit, gate) {
 				continue
 			}
 			allowed, notice := gate.AllowInput(data, audit, options.AuditInput)
@@ -130,10 +131,21 @@ func streamHostOutput(reader io.Reader, relay *RelayClient, audit *AuditLog, sta
 	}
 }
 
-func isWindowsIgnoredControl(data []byte, audit *AuditLog) bool {
+func handleWindowsHostControl(data []byte, audit *AuditLog, gate *HostGate) bool {
 	if !strings.HasPrefix(string(data), ControlPrefix) {
 		return false
 	}
-	audit.Log("control_ignored", map[string]any{"backend": "windows-stdio"})
+	var payload ControlMessage
+	if err := json.Unmarshal(data[len(ControlPrefix):], &payload); err != nil {
+		return false
+	}
+	switch payload.Type {
+	case ControlTypeGuestConnected:
+		gate.GuestConnected(audit)
+	case ControlTypeGuestDisconnected:
+		gate.GuestDisconnected(audit)
+	case ControlTypeResize:
+		audit.Log("control_ignored", map[string]any{"backend": "windows-stdio", "type": payload.Type})
+	}
 	return true
 }

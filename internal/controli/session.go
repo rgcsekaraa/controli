@@ -20,6 +20,12 @@ const (
 	ptyChunkSize             = 64 * 1024
 )
 
+const (
+	ControlTypeResize            = "resize"
+	ControlTypeGuestConnected    = "guest_connected"
+	ControlTypeGuestDisconnected = "guest_disconnected"
+)
+
 type HostOptions struct {
 	RelayURL       string
 	SessionID      string
@@ -162,6 +168,22 @@ func (g *HostGate) AllowInput(data []byte, audit *AuditLog, auditInput bool) (bo
 	}
 	audit.Log("input", fields)
 	return true, ""
+}
+
+func (g *HostGate) GuestConnected(audit *AuditLog) {
+	g.mu.Lock()
+	g.approved = !g.requireApprove && g.mode != HostModeApprove
+	g.askedViewNotice = false
+	g.mu.Unlock()
+	audit.Log("guest_control_reset", map[string]any{"mode": g.mode})
+}
+
+func (g *HostGate) GuestDisconnected(audit *AuditLog) {
+	g.mu.Lock()
+	g.approved = !g.requireApprove && g.mode != HostModeApprove
+	g.askedViewNotice = false
+	g.mu.Unlock()
+	audit.Log("guest_control_closed", map[string]any{"mode": g.mode})
 }
 
 func promptHost(question string) bool {

@@ -27,6 +27,9 @@ const FINAL_CLOSE_CODE = 1000;
 const FINAL_CLOSE_REASON = "controli-final-close";
 const MAX_PENDING_MESSAGES = 2048;
 const MAX_PENDING_BYTES = 16 * 1024 * 1024;
+const CONTROL_PREFIX = "\x00CONTROLI:";
+const CONTROL_GUEST_CONNECTED = "guest_connected";
+const CONTROL_GUEST_DISCONNECTED = "guest_disconnected";
 
 function jsonResponse(status: number, payload: object): Response {
   return new Response(JSON.stringify(payload), {
@@ -113,7 +116,7 @@ export default {
         service: "controli-relay",
         websocket_path: "/v1/ws",
         invite_store: "kv",
-        relay_clients: "multiple",
+        relay_clients: "single-active",
         max_pending_messages: MAX_PENDING_MESSAGES,
         max_pending_bytes: MAX_PENDING_BYTES,
       });
@@ -320,6 +323,10 @@ export class RelaySession implements DurableObject {
       return jsonResponse(403, { error: "invalid session secret" });
     }
 
+    if (side === "client" && this.hasActiveClient()) {
+      return jsonResponse(409, { error: "session already has an active guest" });
+    }
+
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     this.attach(side, server, clientId);
@@ -347,6 +354,9 @@ export class RelaySession implements DurableObject {
     socket.accept();
     this.sockets.set(key, socket);
     this.connectedAt.set(key, new Date().toISOString());
+    if (side === "client") {
+      this.notifyHost(CONTROL_GUEST_CONNECTED);
+    }
     this.flush(side, key);
 
     socket.addEventListener("message", (event) => {
@@ -368,10 +378,17 @@ export class RelaySession implements DurableObject {
       socket.close(1000, "closed");
     }
     if (!finalClose) {
+      if (side === "client" && socket) {
+        this.notifyHost(CONTROL_GUEST_DISCONNECTED);
+      }
       return;
     }
     if (side === "host") {
       this.closeClients("host disconnected");
+      return;
+    }
+    if (side === "client" && socket) {
+      this.notifyHost(CONTROL_GUEST_DISCONNECTED);
     }
   }
 
@@ -459,6 +476,7 @@ export class RelaySession implements DurableObject {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.close(FINAL_CLOSE_CODE, "client disconnected");
     }
+    this.notifyHost(CONTROL_GUEST_DISCONNECTED);
   }
 
   private status(): object {
@@ -496,6 +514,14 @@ export class RelaySession implements DurableObject {
       }
     }
     return sockets;
+  }
+
+  private hasActiveClient(): boolean {
+    return this.clientSockets().some((socket) => socket.readyState === WebSocket.OPEN);
+  }
+
+  private notifyHost(type: string): void {
+    this.deliverHost(`${CONTROL_PREFIX}${JSON.stringify({ type })}`);
   }
 
   private closeClients(reason: string): void {

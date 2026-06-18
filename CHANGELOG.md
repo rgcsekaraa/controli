@@ -6,6 +6,14 @@ All notable changes to Controli will be documented in this file.
 
 - No unreleased changes.
 
+## 0.4.2
+
+- Enforced one active guest connection per invite code.
+- Allowed the same guest to rejoin with the same valid code after disconnect.
+- Reset host approval on every guest connection and reconnection.
+- Rejected additional active guests instead of allowing shared full-control input.
+- Updated relay health metadata and documentation for the single-guest security model.
+
 ## 0.4.1
 
 - Allowed multiple guests to join the same live session with the same 7-digit code until the invite expires.

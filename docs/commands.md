@@ -87,7 +87,7 @@ controli join 1234567
 
 Resolves the code and opens the local browser terminal by default on Windows, macOS, and Linux.
 
-The same 7-digit code can be used by more than one guest until the invite expires. All connected guests see the same terminal output. In full-control mode, all connected guests can send input.
+Only one guest can be connected to a live session at a time. The same 7-digit code can be used again after the guest disconnects, as long as the invite has not expired. Each new connection resets host approval before input can reach the shell.
 
 | Flag | Default | Purpose |
 | --- | --- | --- |

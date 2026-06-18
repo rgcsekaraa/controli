@@ -84,11 +84,19 @@ func (s *tunnelTerminalServer) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *tunnelTerminalServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	if s.hasClient() {
+		http.Error(w, "session already has an active guest", http.StatusConflict)
+		return
+	}
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
-	s.addClient(conn)
+	if !s.addClient(conn) {
+		_ = conn.WriteMessage(websocket.TextMessage, []byte("session already has an active guest"))
+		_ = conn.Close()
+		return
+	}
 	s.audit.Log("guest_connected", map[string]any{"remote_addr": r.RemoteAddr})
 	defer func() {
 		s.audit.Log("guest_disconnected", map[string]any{"remote_addr": r.RemoteAddr})
@@ -123,7 +131,7 @@ func (s *tunnelTerminalServer) handleWebSocket(w http.ResponseWriter, r *http.Re
 			}
 			s.stats.AddInput(len(input))
 			_ = s.input(input)
-		case "resize":
+		case ControlTypeResize:
 			if message.Columns > 0 && message.Rows > 0 {
 				s.resize(uint16(message.Columns), uint16(message.Rows))
 				s.audit.Log("resize", map[string]any{"columns": message.Columns, "rows": message.Rows})
@@ -132,17 +140,35 @@ func (s *tunnelTerminalServer) handleWebSocket(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (s *tunnelTerminalServer) addClient(conn *websocket.Conn) {
+func (s *tunnelTerminalServer) hasClient() bool {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+	return len(s.clients) > 0
+}
+
+func (s *tunnelTerminalServer) addClient(conn *websocket.Conn) bool {
+	s.mu.Lock()
+	if len(s.clients) > 0 {
+		s.mu.Unlock()
+		return false
+	}
 	s.clients[conn] = &sync.Mutex{}
 	s.mu.Unlock()
+	s.gate.GuestConnected(s.audit)
+	return true
 }
 
 func (s *tunnelTerminalServer) removeClient(conn *websocket.Conn) {
 	s.mu.Lock()
-	delete(s.clients, conn)
+	_, existed := s.clients[conn]
+	if existed {
+		delete(s.clients, conn)
+	}
 	s.mu.Unlock()
 	_ = conn.Close()
+	if existed {
+		s.gate.GuestDisconnected(s.audit)
+	}
 }
 
 func (s *tunnelTerminalServer) broadcast(data []byte) {

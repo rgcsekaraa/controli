@@ -116,7 +116,7 @@ func RunHostRelayShellWithOptions(options HostOptions) int {
 				_ = command.Process.Signal(syscall.SIGTERM)
 				return
 			}
-			if handleHostControl(tty, data, audit) {
+			if handleHostControl(tty, data, audit, gate) {
 				continue
 			}
 			allowed, notice := gate.AllowInput(data, audit, options.AuditInput)
@@ -145,7 +145,7 @@ func RunHostRelayShellWithOptions(options HostOptions) int {
 	return 1
 }
 
-func handleHostControl(tty *os.File, data []byte, audit *AuditLog) bool {
+func handleHostControl(tty *os.File, data []byte, audit *AuditLog, gate *HostGate) bool {
 	if !strings.HasPrefix(string(data), ControlPrefix) {
 		return false
 	}
@@ -153,9 +153,17 @@ func handleHostControl(tty *os.File, data []byte, audit *AuditLog) bool {
 	if err := json.Unmarshal(data[len(ControlPrefix):], &payload); err != nil {
 		return false
 	}
-	if payload.Type == "resize" && payload.Columns > 0 && payload.Rows > 0 {
+	switch payload.Type {
+	case ControlTypeResize:
+		if payload.Columns <= 0 || payload.Rows <= 0 {
+			return true
+		}
 		_ = pty.Setsize(tty, &pty.Winsize{Rows: payload.Rows, Cols: payload.Columns})
 		audit.Log("resize", map[string]any{"columns": payload.Columns, "rows": payload.Rows})
+	case ControlTypeGuestConnected:
+		gate.GuestConnected(audit)
+	case ControlTypeGuestDisconnected:
+		gate.GuestDisconnected(audit)
 	}
 	return true
 }

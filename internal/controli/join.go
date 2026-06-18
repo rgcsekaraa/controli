@@ -114,11 +114,19 @@ func (b *WebTerminalBridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *WebTerminalBridge) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	if b.hasClient() {
+		http.Error(w, "terminal is already open", http.StatusConflict)
+		return
+	}
 	conn, err := b.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
-	b.addClient(conn)
+	if !b.addClient(conn) {
+		_ = conn.WriteMessage(websocket.TextMessage, []byte("terminal is already open"))
+		_ = conn.Close()
+		return
+	}
 	defer b.removeClient(conn)
 	for {
 		_, data, err := conn.ReadMessage()
@@ -139,15 +147,25 @@ func (b *WebTerminalBridge) handleWebSocket(w http.ResponseWriter, r *http.Reque
 			if message.Data != "" {
 				_ = b.relay.Send(SideClient, []byte(message.Data))
 			}
-		case "resize":
-			payload, _ := json.Marshal(map[string]any{"type": "resize", "columns": message.Columns, "rows": message.Rows})
+		case ControlTypeResize:
+			payload, _ := json.Marshal(map[string]any{"type": ControlTypeResize, "columns": message.Columns, "rows": message.Rows})
 			_ = b.relay.Send(SideClient, append([]byte(ControlPrefix), payload...))
 		}
 	}
 }
 
-func (b *WebTerminalBridge) addClient(conn *websocket.Conn) {
+func (b *WebTerminalBridge) hasClient() bool {
 	b.mu.Lock()
+	defer b.mu.Unlock()
+	return len(b.clients) > 0
+}
+
+func (b *WebTerminalBridge) addClient(conn *websocket.Conn) bool {
+	b.mu.Lock()
+	if len(b.clients) > 0 {
+		b.mu.Unlock()
+		return false
+	}
 	b.clients[conn] = &sync.Mutex{}
 	pending := append([][]byte(nil), b.pending...)
 	b.pending = nil
@@ -156,6 +174,7 @@ func (b *WebTerminalBridge) addClient(conn *websocket.Conn) {
 	for _, data := range pending {
 		b.writeClient(conn, data)
 	}
+	return true
 }
 
 func (b *WebTerminalBridge) removeClient(conn *websocket.Conn) {
