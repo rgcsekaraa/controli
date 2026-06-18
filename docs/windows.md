@@ -6,9 +6,9 @@ The default join mode uses the browser terminal. This avoids native console rend
 
 ## Device Guard and Smart App Control
 
-Windows Device Guard, App Control for Business, and Smart App Control can block unsigned executables. Controli tagged releases are configured to require Authenticode signing for Windows `.exe` assets before they are uploaded.
+Windows Device Guard, App Control for Business, and Smart App Control can block unsigned executables. Controli Windows release binaries are currently unsigned.
 
-If a company-managed Windows machine still blocks the signed executable, the organization's App Control policy must allow the Controli publisher or release hash. A local unblock command cannot override a strict organization policy.
+If a company-managed Windows machine blocks the executable, the organization's App Control policy must allow the release hash. A local unblock command cannot override a strict organization policy.
 
 Recommended command:
 

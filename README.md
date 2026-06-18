@@ -50,7 +50,7 @@ Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/latest/d
 & "$env:USERPROFILE\Downloads\controli.exe" join 1234567
 ```
 
-Tagged releases require signed Windows executables. If a managed Windows machine still reports Device Guard or App Control blocking, the organization's policy must allow the Controli publisher or release hash.
+Windows release binaries are currently unsigned. If a managed Windows machine reports Device Guard or App Control blocking, the organization's policy must allow the release hash.
 
 ### macOS
 
