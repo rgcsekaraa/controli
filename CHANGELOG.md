@@ -4,7 +4,9 @@ All notable changes to Controli will be documented in this file.
 
 ## Unreleased
 
-- No unreleased changes.
+- Kept host approval during transient reconnects from the same guest.
+- Added browser terminal WebSocket auto-retry with stable per-browser guest IDs.
+- Fixed relay socket replacement so stale close events cannot remove a freshly reconnected socket.
 
 ## 0.4.3
 

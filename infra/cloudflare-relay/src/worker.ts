@@ -323,7 +323,8 @@ export class RelaySession implements DurableObject {
       return jsonResponse(403, { error: "invalid session secret" });
     }
 
-    if (side === "client" && this.hasActiveClient()) {
+    const key = socketKey(side, clientId);
+    if (side === "client" && this.hasActiveClient(key)) {
       return jsonResponse(409, { error: "session already has an active guest" });
     }
 
@@ -346,7 +347,7 @@ export class RelaySession implements DurableObject {
 
   private attach(side: Side, socket: WebSocket, clientId: string | null): void {
     const key = socketKey(side, clientId);
-    const old = side === "host" ? this.sockets.get(key) : null;
+    const old = this.sockets.get(key);
     if (old) {
       old.close(1012, "replaced");
     }
@@ -355,7 +356,7 @@ export class RelaySession implements DurableObject {
     this.sockets.set(key, socket);
     this.connectedAt.set(key, new Date().toISOString());
     if (side === "client") {
-      this.notifyHost(CONTROL_GUEST_CONNECTED);
+      this.notifyHost(CONTROL_GUEST_CONNECTED, clientId, false);
     }
     this.flush(side, key);
 
@@ -365,12 +366,15 @@ export class RelaySession implements DurableObject {
       });
     });
 
-    socket.addEventListener("close", (event) => this.detach(side, key, event.code, event.reason));
-    socket.addEventListener("error", () => this.detach(side, key, 1011, "socket error"));
+    socket.addEventListener("close", (event) => this.detach(side, key, socket, event.code, event.reason));
+    socket.addEventListener("error", () => this.detach(side, key, socket, 1011, "socket error"));
   }
 
-  private detach(side: Side, key: string, code: number, reason: string): void {
+  private detach(side: Side, key: string, closingSocket: WebSocket, code: number, reason: string): void {
     const socket = this.sockets.get(key);
+    if (socket !== closingSocket) {
+      return;
+    }
     this.sockets.delete(key);
     this.connectedAt.delete(key);
     const finalClose = code === FINAL_CLOSE_CODE && reason === FINAL_CLOSE_REASON;
@@ -379,7 +383,7 @@ export class RelaySession implements DurableObject {
     }
     if (!finalClose) {
       if (side === "client" && socket) {
-        this.notifyHost(CONTROL_GUEST_DISCONNECTED);
+        this.notifyHost(CONTROL_GUEST_DISCONNECTED, clientIdFromKey(key), false);
       }
       return;
     }
@@ -388,7 +392,7 @@ export class RelaySession implements DurableObject {
       return;
     }
     if (side === "client" && socket) {
-      this.notifyHost(CONTROL_GUEST_DISCONNECTED);
+      this.notifyHost(CONTROL_GUEST_DISCONNECTED, clientIdFromKey(key), true);
     }
   }
 
@@ -476,7 +480,7 @@ export class RelaySession implements DurableObject {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.close(FINAL_CLOSE_CODE, "client disconnected");
     }
-    this.notifyHost(CONTROL_GUEST_DISCONNECTED);
+    this.notifyHost(CONTROL_GUEST_DISCONNECTED, clientId, true);
   }
 
   private status(): object {
@@ -516,12 +520,20 @@ export class RelaySession implements DurableObject {
     return sockets;
   }
 
-  private hasActiveClient(): boolean {
-    return this.clientSockets().some((socket) => socket.readyState === WebSocket.OPEN);
+  private hasActiveClient(connectingKey: string): boolean {
+    for (const [key, socket] of this.sockets) {
+      if (!isClientKey(key) || key === connectingKey) {
+        continue;
+      }
+      if (socket.readyState === WebSocket.OPEN) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  private notifyHost(type: string): void {
-    this.deliverHost(`${CONTROL_PREFIX}${JSON.stringify({ type })}`);
+  private notifyHost(type: string, clientId: string | null, final: boolean): void {
+    this.deliverHost(`${CONTROL_PREFIX}${JSON.stringify({ type, client_id: clientId ?? "", final })}`);
   }
 
   private closeClients(reason: string): void {
@@ -548,6 +560,13 @@ function socketKey(side: Side, clientId: string | null): string {
 
 function isClientKey(key: string): boolean {
   return key === "client" || key.startsWith("client:");
+}
+
+function clientIdFromKey(key: string): string {
+  if (key === "client") {
+    return "";
+  }
+  return key.startsWith("client:") ? key.slice("client:".length) : "";
 }
 
 function payloadBytes(payload: RelayPayload): number {

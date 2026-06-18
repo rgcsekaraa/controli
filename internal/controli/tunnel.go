@@ -29,30 +29,34 @@ type TunnelHostOptions struct {
 }
 
 type tunnelTerminalServer struct {
-	token      string
-	audit      *AuditLog
-	stats      *SessionStats
-	gate       *HostGate
-	auditInput bool
-	stop       chan struct{}
-	input      func([]byte) error
-	resize     func(uint16, uint16)
-	clients    map[*websocket.Conn]*sync.Mutex
-	mu         sync.Mutex
-	upgrader   websocket.Upgrader
+	token       string
+	audit       *AuditLog
+	stats       *SessionStats
+	gate        *HostGate
+	auditInput  bool
+	stop        chan struct{}
+	input       func([]byte) error
+	resize      func(uint16, uint16)
+	clients     map[*websocket.Conn]*sync.Mutex
+	clientIDs   map[*websocket.Conn]string
+	clientsByID map[string]*websocket.Conn
+	mu          sync.Mutex
+	upgrader    websocket.Upgrader
 }
 
 func newTunnelTerminalServer(token string, audit *AuditLog, stats *SessionStats, gate *HostGate, auditInput bool, input func([]byte) error, resize func(uint16, uint16)) *tunnelTerminalServer {
 	return &tunnelTerminalServer{
-		token:      token,
-		audit:      audit,
-		stats:      stats,
-		gate:       gate,
-		auditInput: auditInput,
-		stop:       make(chan struct{}),
-		input:      input,
-		resize:     resize,
-		clients:    map[*websocket.Conn]*sync.Mutex{},
+		token:       token,
+		audit:       audit,
+		stats:       stats,
+		gate:        gate,
+		auditInput:  auditInput,
+		stop:        make(chan struct{}),
+		input:       input,
+		resize:      resize,
+		clients:     map[*websocket.Conn]*sync.Mutex{},
+		clientIDs:   map[*websocket.Conn]string{},
+		clientsByID: map[string]*websocket.Conn{},
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return r.URL.Query().Get("token") == token
@@ -84,7 +88,8 @@ func (s *tunnelTerminalServer) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *tunnelTerminalServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	if s.hasClient() {
+	clientID := normalizeGuestID(r.URL.Query().Get("client_id"))
+	if s.hasDifferentClient(clientID) {
 		http.Error(w, "session already has an active guest", http.StatusConflict)
 		return
 	}
@@ -92,15 +97,15 @@ func (s *tunnelTerminalServer) handleWebSocket(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return
 	}
-	if !s.addClient(conn) {
+	if !s.addClient(conn, clientID) {
 		_ = conn.WriteMessage(websocket.TextMessage, []byte("session already has an active guest"))
 		_ = conn.Close()
 		return
 	}
-	s.audit.Log("guest_connected", map[string]any{"remote_addr": r.RemoteAddr})
+	s.audit.Log("guest_connected", map[string]any{"remote_addr": r.RemoteAddr, "client_id": clientID})
 	defer func() {
-		s.audit.Log("guest_disconnected", map[string]any{"remote_addr": r.RemoteAddr})
-		s.removeClient(conn)
+		s.audit.Log("guest_disconnected", map[string]any{"remote_addr": r.RemoteAddr, "client_id": clientID})
+		s.removeClient(conn, false)
 	}()
 	for {
 		_, data, err := conn.ReadMessage()
@@ -140,34 +145,50 @@ func (s *tunnelTerminalServer) handleWebSocket(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (s *tunnelTerminalServer) hasClient() bool {
+func (s *tunnelTerminalServer) hasDifferentClient(clientID string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return len(s.clients) > 0
+	if len(s.clients) == 0 {
+		return false
+	}
+	existing := s.clientsByID[clientID]
+	return existing == nil
 }
 
-func (s *tunnelTerminalServer) addClient(conn *websocket.Conn) bool {
+func (s *tunnelTerminalServer) addClient(conn *websocket.Conn, clientID string) bool {
 	s.mu.Lock()
-	if len(s.clients) > 0 {
+	clientID = normalizeGuestID(clientID)
+	if existing := s.clientsByID[clientID]; existing != nil {
+		delete(s.clients, existing)
+		delete(s.clientIDs, existing)
+		delete(s.clientsByID, clientID)
+		_ = existing.Close()
+	} else if len(s.clients) > 0 {
 		s.mu.Unlock()
 		return false
 	}
 	s.clients[conn] = &sync.Mutex{}
+	s.clientIDs[conn] = clientID
+	s.clientsByID[clientID] = conn
 	s.mu.Unlock()
-	s.gate.GuestConnected(s.audit)
+	s.gate.GuestConnected(s.audit, clientID)
 	return true
 }
 
-func (s *tunnelTerminalServer) removeClient(conn *websocket.Conn) {
+func (s *tunnelTerminalServer) removeClient(conn *websocket.Conn, final bool) {
 	s.mu.Lock()
-	_, existed := s.clients[conn]
+	clientID, existed := s.clientIDs[conn]
 	if existed {
 		delete(s.clients, conn)
+		delete(s.clientIDs, conn)
+		if s.clientsByID[clientID] == conn {
+			delete(s.clientsByID, clientID)
+		}
 	}
 	s.mu.Unlock()
 	_ = conn.Close()
 	if existed {
-		s.gate.GuestDisconnected(s.audit)
+		s.gate.GuestDisconnected(s.audit, clientID, final)
 	}
 }
 
@@ -194,7 +215,7 @@ func (s *tunnelTerminalServer) writeClient(conn *websocket.Conn, data []byte) {
 	err := conn.WriteMessage(websocket.BinaryMessage, data)
 	lock.Unlock()
 	if err != nil {
-		s.removeClient(conn)
+		s.removeClient(conn, false)
 	}
 }
 

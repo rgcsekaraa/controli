@@ -58,7 +58,7 @@ controli join 1234567
 
 The guest browser opens the tunnel URL with a session token.
 
-Only one guest can be connected at a time. The same 7-digit code can be used again after disconnect while the invite is still valid. The host is asked for approval again before the rejoined guest can type.
+Only one guest can be connected at a time. The same 7-digit code can be used again while the invite is still valid. Reconnects from the same browser keep the existing host approval; a different guest requires fresh approval before typing.
 
 ## Local Port
 

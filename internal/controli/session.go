@@ -42,10 +42,12 @@ type HostOptions struct {
 }
 
 type ControlMessage struct {
-	Type    string `json:"type"`
-	Columns uint16 `json:"columns,omitempty"`
-	Rows    uint16 `json:"rows,omitempty"`
-	Text    string `json:"text,omitempty"`
+	Type     string `json:"type"`
+	Columns  uint16 `json:"columns,omitempty"`
+	Rows     uint16 `json:"rows,omitempty"`
+	Text     string `json:"text,omitempty"`
+	ClientID string `json:"client_id,omitempty"`
+	Final    bool   `json:"final,omitempty"`
 }
 
 type SessionStats struct {
@@ -91,6 +93,8 @@ type HostGate struct {
 	requireApprove  bool
 	approved        bool
 	askedViewNotice bool
+	activeGuestID   string
+	approvedGuestID string
 	mu              sync.Mutex
 }
 
@@ -152,6 +156,7 @@ func (g *HostGate) AllowInput(data []byte, audit *AuditLog, auditInput bool) (bo
 			return false, "\r\n[controli] host denied control\r\n"
 		}
 		g.approved = true
+		g.approvedGuestID = g.activeGuestID
 		audit.Log("control_approved", map[string]any{"mode": g.mode})
 	}
 	fields := map[string]any{"bytes": len(data)}
@@ -170,20 +175,40 @@ func (g *HostGate) AllowInput(data []byte, audit *AuditLog, auditInput bool) (bo
 	return true, ""
 }
 
-func (g *HostGate) GuestConnected(audit *AuditLog) {
+func (g *HostGate) GuestConnected(audit *AuditLog, clientID string) {
 	g.mu.Lock()
-	g.approved = !g.requireApprove && g.mode != HostModeApprove
-	g.askedViewNotice = false
+	clientID = normalizeGuestID(clientID)
+	sameApprovedGuest := clientID != "" && clientID == g.approvedGuestID && g.approved
+	g.activeGuestID = clientID
+	if !sameApprovedGuest {
+		g.approved = !g.requireApprove && g.mode != HostModeApprove
+		g.askedViewNotice = false
+	}
 	g.mu.Unlock()
-	audit.Log("guest_control_reset", map[string]any{"mode": g.mode})
+	audit.Log("guest_connected", map[string]any{"mode": g.mode, "client_id": clientID, "approval_reused": sameApprovedGuest})
 }
 
-func (g *HostGate) GuestDisconnected(audit *AuditLog) {
+func (g *HostGate) GuestDisconnected(audit *AuditLog, clientID string, final bool) {
 	g.mu.Lock()
-	g.approved = !g.requireApprove && g.mode != HostModeApprove
-	g.askedViewNotice = false
+	clientID = normalizeGuestID(clientID)
+	if clientID == g.activeGuestID {
+		g.activeGuestID = ""
+	}
+	if final && (clientID == "" || clientID == g.approvedGuestID) {
+		g.approvedGuestID = ""
+		g.approved = !g.requireApprove && g.mode != HostModeApprove
+		g.askedViewNotice = false
+	}
 	g.mu.Unlock()
-	audit.Log("guest_control_closed", map[string]any{"mode": g.mode})
+	audit.Log("guest_disconnected", map[string]any{"mode": g.mode, "client_id": clientID, "final": final})
+}
+
+func normalizeGuestID(clientID string) string {
+	clientID = strings.TrimSpace(clientID)
+	if clientID == "" {
+		return "legacy-client"
+	}
+	return clientID
 }
 
 func promptHost(question string) bool {

@@ -141,9 +141,9 @@ func handleWindowsHostControl(data []byte, audit *AuditLog, gate *HostGate) bool
 	}
 	switch payload.Type {
 	case ControlTypeGuestConnected:
-		gate.GuestConnected(audit)
+		gate.GuestConnected(audit, payload.ClientID)
 	case ControlTypeGuestDisconnected:
-		gate.GuestDisconnected(audit)
+		gate.GuestDisconnected(audit, payload.ClientID, payload.Final)
 	case ControlTypeResize:
 		audit.Log("control_ignored", map[string]any{"backend": "windows-stdio", "type": payload.Type})
 	}

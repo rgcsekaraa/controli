@@ -133,7 +133,7 @@ controli host tunnel --workspace main --public-url https://cli.example.com --min
 
 Send the printed 7-digit code to the guest.
 
-Only one guest can be connected to a live session at a time. The same 7-digit code can be used again after the guest disconnects, as long as the invite has not expired. Each new connection requires host approval before input reaches the shell.
+Only one guest can be connected to a live session at a time. The same 7-digit code can be used again while the invite has not expired. A reconnect from the same guest keeps the existing approval; a different guest requires fresh host approval before input reaches the shell.
 
 ## Relay Setup
 
@@ -197,7 +197,8 @@ Security behavior:
 
 - One active guest is allowed per invite code.
 - A reconnect with the same valid code is allowed after disconnect.
-- Host approval is reset for every new guest connection.
+- Same-guest reconnects keep approval so temporary WebSocket drops do not interrupt control.
+- A different guest requires fresh host approval before input reaches the shell.
 - Additional guests are rejected while a guest is already connected.
 
 Audit logs are written to `~/.controli/audit/<session>.jsonl` by default. Add `--audit-input` only when recording typed input is acceptable.

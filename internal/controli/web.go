@@ -60,22 +60,66 @@ func RenderWebTerminalHTML(token string) string {
     fitAddon.fit();
     term.focus();
     const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socket = new WebSocket(wsProtocol + '//' + location.host + '/ws?token=' + encodeURIComponent(token));
-    socket.binaryType = 'arraybuffer';
-    function sendResize() {
-      if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'resize', columns: term.cols, rows: term.rows }));
+    const clientStorageKey = 'controli.client.' + token;
+    let clientId = localStorage.getItem(clientStorageKey);
+    if (!clientId) {
+      const random = new Uint8Array(16);
+      crypto.getRandomValues(random);
+      clientId = Array.from(random, b => b.toString(16).padStart(2, '0')).join('');
+      localStorage.setItem(clientStorageKey, clientId);
     }
-    socket.addEventListener('open', () => { status.textContent = 'connected'; sendResize(); term.focus(); });
-    socket.addEventListener('message', (event) => {
-      if (event.data instanceof ArrayBuffer) term.write(new Uint8Array(event.data));
-      else term.write(event.data);
-    });
-    socket.addEventListener('close', () => { status.textContent = 'closed'; term.write('\r\n\x1b[31mconnection closed\x1b[0m\r\n'); });
+    let socket = null;
+    let reconnectDelay = 250;
+    let manuallyClosed = false;
+    let pendingInput = [];
+    function socketURL() {
+      return wsProtocol + '//' + location.host + '/ws?token=' + encodeURIComponent(token) + '&client_id=' + encodeURIComponent(clientId);
+    }
+    function flushInput() {
+      if (!socket || socket.readyState !== WebSocket.OPEN) return;
+      while (pendingInput.length > 0 && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'input', data: pendingInput.shift() }));
+      }
+    }
+    function sendResize() {
+      if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'resize', columns: term.cols, rows: term.rows }));
+    }
+    function connect() {
+      socket = new WebSocket(socketURL());
+      socket.binaryType = 'arraybuffer';
+      socket.addEventListener('open', () => {
+        status.textContent = 'connected';
+        reconnectDelay = 250;
+        sendResize();
+        flushInput();
+        term.focus();
+      });
+      socket.addEventListener('message', (event) => {
+        if (event.data instanceof ArrayBuffer) term.write(new Uint8Array(event.data));
+        else term.write(event.data);
+      });
+      socket.addEventListener('close', () => {
+        if (manuallyClosed) return;
+        status.textContent = 'reconnecting';
+        window.setTimeout(connect, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, 5000);
+      });
+      socket.addEventListener('error', () => {
+        if (socket) socket.close();
+      });
+    }
     term.onData((data) => {
-      if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'input', data }));
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'input', data }));
+        return;
+      }
+      pendingInput.push(data);
+      while (pendingInput.length > 256) pendingInput.shift();
     });
     term.onResize(sendResize);
     window.addEventListener('resize', () => { fitAddon.fit(); sendResize(); });
+    window.addEventListener('beforeunload', () => { manuallyClosed = true; if (socket) socket.close(); });
+    connect();
   </script>
 </body>
 </html>`, token, token)

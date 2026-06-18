@@ -2,39 +2,60 @@ package controli
 
 import "testing"
 
-func TestGuestConnectedResetsApprovalWhenApprovalRequired(t *testing.T) {
+func TestSameGuestReconnectKeepsApproval(t *testing.T) {
 	gate := NewHostGate(HostModeFull, true)
+	gate.GuestConnected(nil, "guest-a")
 	gate.approved = true
-	gate.askedViewNotice = true
+	gate.approvedGuestID = "guest-a"
 
-	gate.GuestConnected(nil)
+	gate.GuestDisconnected(nil, "guest-a", false)
+	gate.GuestConnected(nil, "guest-a")
 
-	if gate.approved {
-		t.Fatal("guest reconnect should reset approval")
+	if !gate.approved {
+		t.Fatal("same guest reconnect should keep approval")
 	}
-	if gate.askedViewNotice {
-		t.Fatal("guest reconnect should reset view notice state")
+	if gate.approvedGuestID != "guest-a" {
+		t.Fatal("same guest reconnect should keep approved guest id")
 	}
 }
 
-func TestGuestConnectedKeepsApprovalWhenApprovalDisabled(t *testing.T) {
+func TestDifferentGuestConnectionResetsApproval(t *testing.T) {
+	gate := NewHostGate(HostModeFull, true)
+	gate.GuestConnected(nil, "guest-a")
+	gate.approved = true
+	gate.approvedGuestID = "guest-a"
+
+	gate.GuestDisconnected(nil, "guest-a", false)
+	gate.GuestConnected(nil, "guest-b")
+
+	if gate.approved {
+		t.Fatal("different guest should require fresh approval")
+	}
+}
+
+func TestFinalGuestDisconnectClearsApproval(t *testing.T) {
+	gate := NewHostGate(HostModeFull, true)
+	gate.GuestConnected(nil, "guest-a")
+	gate.approved = true
+	gate.approvedGuestID = "guest-a"
+
+	gate.GuestDisconnected(nil, "guest-a", true)
+
+	if gate.approved {
+		t.Fatal("final guest disconnect should clear approval")
+	}
+	if gate.approvedGuestID != "" {
+		t.Fatal("final guest disconnect should clear approved guest id")
+	}
+}
+
+func TestApprovalDisabledKeepsGateOpen(t *testing.T) {
 	gate := NewHostGate(HostModeFull, false)
 	gate.approved = false
 
-	gate.GuestConnected(nil)
+	gate.GuestConnected(nil, "guest-a")
 
 	if !gate.approved {
 		t.Fatal("approval should remain open when host disabled approval prompts")
-	}
-}
-
-func TestGuestConnectedRequiresApprovalModeEveryTime(t *testing.T) {
-	gate := NewHostGate(HostModeApprove, false)
-	gate.approved = true
-
-	gate.GuestConnected(nil)
-
-	if gate.approved {
-		t.Fatal("approve mode should require approval after every reconnect")
 	}
 }

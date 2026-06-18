@@ -161,9 +161,9 @@ func handleHostControl(tty *os.File, data []byte, audit *AuditLog, gate *HostGat
 		_ = pty.Setsize(tty, &pty.Winsize{Rows: payload.Rows, Cols: payload.Columns})
 		audit.Log("resize", map[string]any{"columns": payload.Columns, "rows": payload.Rows})
 	case ControlTypeGuestConnected:
-		gate.GuestConnected(audit)
+		gate.GuestConnected(audit, payload.ClientID)
 	case ControlTypeGuestDisconnected:
-		gate.GuestDisconnected(audit)
+		gate.GuestDisconnected(audit, payload.ClientID, payload.Final)
 	}
 	return true
 }

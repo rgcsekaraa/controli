@@ -87,7 +87,7 @@ controli join 1234567
 
 Resolves the code and opens the local browser terminal by default on Windows, macOS, and Linux.
 
-Only one guest can be connected to a live session at a time. The same 7-digit code can be used again after the guest disconnects, as long as the invite has not expired. Each new connection resets host approval before input can reach the shell.
+Only one guest can be connected to a live session at a time. The same 7-digit code can be used again while the invite has not expired. Reconnects from the same guest keep existing approval; a different guest requires fresh host approval before input can reach the shell.
 
 | Flag | Default | Purpose |
 | --- | --- | --- |
