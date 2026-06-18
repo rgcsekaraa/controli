@@ -9,7 +9,6 @@ All notable changes to Controli will be documented in this file.
 ## 0.4.3
 
 - Fixed relay compatibility for older Windows guests that do not send `client_id`.
-- Kept Windows release assets byte-for-byte compatible with the known-good `v0.4.0` Windows guest binaries.
 - Preserved the single-active-guest relay policy for both legacy and current clients.
 - Added SHA256 checksum generation for release assets.
 - Documented Windows Device Guard and App Control behavior for unsigned release binaries.

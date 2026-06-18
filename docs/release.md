@@ -23,6 +23,4 @@ The GitHub release workflow uses the same target names as the local `make build`
 
 Windows `.exe` assets are currently unsigned. On personal Windows machines this usually runs after the user allows the downloaded file. On machines managed with Device Guard, App Control for Business, Smart App Control, or WDAC, each new release hash may need to be allowed by policy.
 
-To avoid changing the Windows executable identity on locked-down machines, the release workflow reuses the known-good `v0.4.0` Windows guest binaries for Windows release assets. macOS and Linux assets are built from the current tag.
-
 The release job publishes `SHA256SUMS.txt` for all assets so administrators can verify the exact release hashes when publisher signing is not available.

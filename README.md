@@ -50,7 +50,7 @@ Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/latest/d
 & "$env:USERPROFILE\Downloads\controli.exe" join 1234567
 ```
 
-Windows release binaries are currently unsigned. Current Windows assets reuse the known-good `v0.4.0` guest binaries so the executable hash stays compatible with systems that already allowed that build.
+Windows release binaries are currently unsigned. If Device Guard or App Control blocks the file on a managed Windows machine, the organization's policy must allow the release hash or Controli must ship a trusted signed binary.
 
 ### macOS
 
