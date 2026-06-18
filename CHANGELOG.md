@@ -4,7 +4,9 @@ All notable changes to Controli will be documented in this file.
 
 ## Unreleased
 
-- No unreleased changes.
+- Added enforced Authenticode signing for tagged Windows release builds.
+- Added SHA256 checksum generation for release assets.
+- Documented the Azure Trusted Signing setup required for Windows Device Guard and Smart App Control.
 
 ## 0.4.2
 
