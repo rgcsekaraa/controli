@@ -7,7 +7,7 @@ Controli is a native Go CLI sharing tool for support sessions. A host starts a l
 | Area | Status |
 | --- | --- |
 | Host support | macOS and Linux with a real PTY, Windows with stdio |
-| Guest support | Windows, macOS, and Linux |
+| Guest support | Browser join for tunnel sessions, CLI join for fallback |
 | Long sessions | Named Cloudflare Tunnel |
 | Short-code lookup | Cloudflare Worker with Workers KV |
 | Relay fallback | Cloudflare Worker with Durable Objects |
@@ -27,7 +27,13 @@ Start a long tunnel session and print an invite code:
 controli host tunnel --workspace main --public-url https://cli.example.com --minutes 0
 ```
 
-Join from the guest machine:
+Join from the guest machine with no install:
+
+```text
+https://controli-relay.rgcsekaraa.workers.dev/join
+```
+
+Or join with the CLI:
 
 ```bash
 controli join 1234567

@@ -133,6 +133,12 @@ controli host tunnel --workspace main --public-url https://cli.example.com --min
 
 Send the printed 7-digit code to the guest.
 
+The guest can open this URL in a browser and enter the code. No Windows `.exe` is required for tunnel sessions:
+
+```text
+https://controli-relay.rgcsekaraa.workers.dev/join
+```
+
 Only one guest can be connected to a live session at a time. The same 7-digit code can be used again while the invite has not expired. A reconnect from the same guest keeps the existing approval; a different guest requires fresh host approval before input reaches the shell.
 
 On macOS and Linux, install `tmux` for persistent hosted shells. Controli uses it by default when available, so the shell keeps running if the Controli host process detaches. Start the same workspace again to reattach.
@@ -206,6 +212,16 @@ Security behavior:
 Audit logs are written to `~/.controli/audit/<session>.jsonl` by default. Add `--audit-input` only when recording typed input is acceptable.
 
 ## Guest Join
+
+Browser join for tunnel sessions:
+
+```text
+https://controli-relay.rgcsekaraa.workers.dev/join
+```
+
+The guest enters the 7-digit code from the host.
+
+CLI join is still available:
 
 ```bash
 controli join 1234567

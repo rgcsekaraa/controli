@@ -4,6 +4,7 @@ All notable changes to Controli will be documented in this file.
 
 ## Unreleased
 
+- Added a Worker-hosted browser join page at `/join` for no-install tunnel guests.
 - Added persistent macOS and Linux host shells through `tmux` when available.
 - Added `--persist`, `--persist-name`, and `--minutes 0` for no fixed Controli session expiry.
 - Kept host approval during transient reconnects from the same guest.

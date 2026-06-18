@@ -38,6 +38,18 @@ function jsonResponse(status: number, payload: object): Response {
   });
 }
 
+function htmlResponse(html: string): Response {
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "no-referrer",
+    },
+  });
+}
+
 function getParam(url: URL, name: string): string | null {
   const value = url.searchParams.get(name);
   return value && value.trim() ? value : null;
@@ -112,14 +124,178 @@ function inviteTTL(value: string): number | null {
   return Math.max(0, seconds);
 }
 
+function joinTunnelURL(publicURL: string, secret: string): string {
+  const parsed = new URL(publicURL);
+  parsed.searchParams.set("token", secret);
+  return parsed.toString();
+}
+
+function renderJoinPage(): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Join Controli</title>
+  <meta name="robots" content="noindex">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f7f5;
+      --text: #171717;
+      --muted: #595959;
+      --line: #b9b9b4;
+      --panel: #ffffff;
+      --button: #171717;
+      --button-text: #ffffff;
+      --error: #8f1d1d;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111111;
+        --text: #f0f0ed;
+        --muted: #b8b8b0;
+        --line: #3c3c38;
+        --panel: #181818;
+        --button: #f0f0ed;
+        --button-text: #111111;
+        --error: #ff8a8a;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; }
+    body {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      width: min(100%, 420px);
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 28px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.2;
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+    p { margin: 0 0 20px; color: var(--muted); }
+    label {
+      display: block;
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      background: transparent;
+      color: var(--text);
+      padding: 0 12px;
+      font: 22px/48px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: 0;
+    }
+    button {
+      width: 100%;
+      height: 44px;
+      margin-top: 12px;
+      border: 1px solid var(--button);
+      border-radius: 2px;
+      background: var(--button);
+      color: var(--button-text);
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    button:disabled {
+      cursor: wait;
+      opacity: 0.68;
+    }
+    #status {
+      min-height: 22px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    #status.error { color: var(--error); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Join Controli</h1>
+    <p>Enter the 7-digit code from the host.</p>
+    <form id="join-form" autocomplete="off">
+      <label for="code">Code</label>
+      <input id="code" name="code" inputmode="numeric" pattern="[0-9 ]*" maxlength="16" placeholder="1234567" autofocus>
+      <button id="join-button" type="submit">Join session</button>
+      <div id="status" role="status" aria-live="polite"></div>
+    </form>
+  </main>
+  <script>
+    const form = document.getElementById('join-form');
+    const codeInput = document.getElementById('code');
+    const button = document.getElementById('join-button');
+    const status = document.getElementById('status');
+    const params = new URLSearchParams(location.search);
+    const initialCode = (params.get('code') || '').replace(/\\D/g, '');
+    if (initialCode) codeInput.value = initialCode;
+    function setStatus(text, error = false) {
+      status.textContent = text;
+      status.className = error ? 'error' : '';
+    }
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const code = codeInput.value.replace(/\\D/g, '');
+      if (code.length !== 7) {
+        setStatus('Enter a valid 7-digit code.', true);
+        codeInput.focus();
+        return;
+      }
+      button.disabled = true;
+      setStatus('Connecting...');
+      try {
+        const response = await fetch('/v1/browser/claim', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ code })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || 'Could not join session.');
+        }
+        setStatus('Opening terminal...');
+        location.assign(payload.terminal_url);
+      } catch (error) {
+        setStatus(error.message || 'Could not join session.', true);
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>`;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    if ((url.pathname === "/" || url.pathname === "/join") && request.method === "GET") {
+      return htmlResponse(renderJoinPage());
+    }
 
     if (url.pathname === "/health") {
       return jsonResponse(200, {
         ok: true,
         service: "controli-relay",
+        browser_join_path: "/join",
         websocket_path: "/v1/ws",
         invite_store: "kv",
         relay_clients: "single-active",
@@ -166,6 +342,38 @@ export default {
         return jsonResponse(410, { error: "short code expired" });
       }
       return jsonResponse(200, invite);
+    }
+
+    if (url.pathname === "/v1/browser/claim" && request.method === "POST") {
+      const payload = await request.json<Record<string, unknown>>().catch(() => null);
+      const code = typeof payload?.code === "string" ? normalizeCode(payload.code) : null;
+      if (!code) {
+        return jsonResponse(400, { error: "valid 7-digit code is required" });
+      }
+      const invite = await env.INVITES_KV.get<InvitePayload>(inviteKey(code), "json");
+      if (!invite) {
+        return jsonResponse(404, { error: "unknown short code" });
+      }
+      if (isExpired(invite.invite_expires_at)) {
+        await env.INVITES_KV.delete(inviteKey(code));
+        return jsonResponse(410, { error: "short code expired" });
+      }
+      if (invite.transport !== "tunnel" || !invite.tunnel_url) {
+        return jsonResponse(409, { error: "browser join requires tunnel mode for this release" });
+      }
+      let terminalURL: string;
+      try {
+        terminalURL = joinTunnelURL(invite.tunnel_url, invite.secret);
+      } catch {
+        return jsonResponse(400, { error: "session has an invalid tunnel URL" });
+      }
+      return jsonResponse(200, {
+        ok: true,
+        transport: invite.transport,
+        room: invite.room ?? "",
+        mode: invite.mode ?? "",
+        terminal_url: terminalURL,
+      });
     }
 
     if (url.pathname === "/v1/close" && request.method === "POST") {

@@ -45,6 +45,14 @@ controli host tunnel --workspace main --public-url https://cli.example.com --min
 
 Send the printed 7-digit code to the guest.
 
+The guest does not need to install Controli. They can open:
+
+```text
+https://controli-relay.rgcsekaraa.workers.dev/join
+```
+
+Then they enter the 7-digit code and the browser opens the terminal.
+
 The host should keep both processes running:
 
 - `cloudflared tunnel run <tunnel-name>`
@@ -60,11 +68,11 @@ The host machine still must stay awake and powered on. A reboot, shutdown, user 
 
 ## Guest Join
 
-```bash
-controli join 1234567
+```text
+https://controli-relay.rgcsekaraa.workers.dev/join
 ```
 
-The guest browser opens the tunnel URL with a session token.
+The guest enters the 7-digit code. The browser opens the tunnel URL with a session token.
 
 Only one guest can be connected at a time. The same 7-digit code can be used again while the invite is still valid. Reconnects from the same browser keep the existing host approval; a different guest requires fresh approval before typing.
 

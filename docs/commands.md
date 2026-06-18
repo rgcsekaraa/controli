@@ -86,11 +86,21 @@ controli host share --workspace main --audit-log off
 
 ## Join a session
 
+Browser join for tunnel sessions:
+
+```text
+https://controli-relay.rgcsekaraa.workers.dev/join
+```
+
+The guest enters the 7-digit code from the host and the browser opens the terminal.
+
+CLI join:
+
 ```bash
 controli join 1234567
 ```
 
-Resolves the code and opens the local browser terminal by default on Windows, macOS, and Linux.
+Resolves the code and opens the local browser terminal by default on Windows, macOS, and Linux. Use CLI join for relay fallback sessions or diagnostics.
 
 Only one guest can be connected to a live session at a time. The same 7-digit code can be used again while the invite has not expired. Reconnects from the same guest keep existing approval; a different guest requires fresh host approval before input can reach the shell.
 

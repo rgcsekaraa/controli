@@ -352,6 +352,7 @@ func cmdHostTunnel(args []string) int {
 		fmt.Println()
 		fmt.Println("expires_at:", printableExpiry(expiresAt))
 		fmt.Println("transport:", controli.TransportTunnel)
+		fmt.Println("browser_join_url:", browserJoinURL(activeRelayURL))
 	}
 	if *printOnly {
 		return 0
@@ -436,6 +437,17 @@ func printableExpiry(value string) string {
 		return "never"
 	}
 	return value
+}
+
+func browserJoinURL(relayURL string) string {
+	value := strings.TrimRight(strings.TrimSpace(relayURL), "/")
+	if strings.HasPrefix(value, "wss://") {
+		value = "https://" + strings.TrimPrefix(value, "wss://")
+	}
+	if strings.HasPrefix(value, "ws://") {
+		value = "http://" + strings.TrimPrefix(value, "ws://")
+	}
+	return value + "/join"
 }
 
 func cmdJoin(args []string) int {
