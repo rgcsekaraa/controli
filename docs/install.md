@@ -1,6 +1,6 @@
 # Install
 
-Download the binary that matches the guest or host machine. The current release is [v0.4.0](https://github.com/rgcsekaraa/controli/releases/tag/v0.4.0).
+Download the binary that matches the guest or host machine. The current release is [v0.4.1](https://github.com/rgcsekaraa/controli/releases/tag/v0.4.1).
 
 <div class="download-grid">
   <section class="download-card">
@@ -11,10 +11,10 @@ Download the binary that matches the guest or host machine. The current release 
         <tr><th>Machine</th><th>Download</th></tr>
       </thead>
       <tbody>
-        <tr><td>Most Intel or AMD PCs</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-amd64.exe">controli-windows-amd64.exe</a></td></tr>
-        <tr><td>Older 32-bit PCs</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-386.exe">controli-windows-386.exe</a></td></tr>
-        <tr><td>Windows on ARM64</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-arm64.exe">controli-windows-arm64.exe</a></td></tr>
-        <tr><td>Older Windows ARM devices</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-arm.exe">controli-windows-arm.exe</a></td></tr>
+        <tr><td>Most Intel or AMD PCs</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-windows-amd64.exe">controli-windows-amd64.exe</a></td></tr>
+        <tr><td>Older 32-bit PCs</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-windows-386.exe">controli-windows-386.exe</a></td></tr>
+        <tr><td>Windows on ARM64</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-windows-arm64.exe">controli-windows-arm64.exe</a></td></tr>
+        <tr><td>Older Windows ARM devices</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-windows-arm.exe">controli-windows-arm.exe</a></td></tr>
       </tbody>
     </table>
   </section>
@@ -27,8 +27,8 @@ Download the binary that matches the guest or host machine. The current release 
         <tr><th>Machine</th><th>Download</th></tr>
       </thead>
       <tbody>
-        <tr><td>Apple Silicon</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-darwin-arm64">controli-darwin-arm64</a></td></tr>
-        <tr><td>Intel Mac</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-darwin-amd64">controli-darwin-amd64</a></td></tr>
+        <tr><td>Apple Silicon</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-darwin-arm64">controli-darwin-arm64</a></td></tr>
+        <tr><td>Intel Mac</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-darwin-amd64">controli-darwin-amd64</a></td></tr>
       </tbody>
     </table>
   </section>
@@ -41,14 +41,14 @@ Download the binary that matches the guest or host machine. The current release 
         <tr><th>Machine</th><th>Download</th></tr>
       </thead>
       <tbody>
-        <tr><td>Most Intel or AMD desktops and servers</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-amd64">controli-linux-amd64</a></td></tr>
-        <tr><td>Older 32-bit Intel or AMD systems</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-386">controli-linux-386</a></td></tr>
-        <tr><td>ARM64 servers and boards</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-arm64">controli-linux-arm64</a></td></tr>
-        <tr><td>ARMv7 boards</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-armv7">controli-linux-armv7</a></td></tr>
-        <tr><td>ARMv6 boards</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-armv6">controli-linux-armv6</a></td></tr>
-        <tr><td>PowerPC 64 little-endian servers</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-ppc64le">controli-linux-ppc64le</a></td></tr>
-        <tr><td>RISC-V 64 systems</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-riscv64">controli-linux-riscv64</a></td></tr>
-        <tr><td>IBM Z or LinuxONE</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-s390x">controli-linux-s390x</a></td></tr>
+        <tr><td>Most Intel or AMD desktops and servers</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-amd64">controli-linux-amd64</a></td></tr>
+        <tr><td>Older 32-bit Intel or AMD systems</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-386">controli-linux-386</a></td></tr>
+        <tr><td>ARM64 servers and boards</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-arm64">controli-linux-arm64</a></td></tr>
+        <tr><td>ARMv7 boards</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-armv7">controli-linux-armv7</a></td></tr>
+        <tr><td>ARMv6 boards</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-armv6">controli-linux-armv6</a></td></tr>
+        <tr><td>PowerPC 64 little-endian servers</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-ppc64le">controli-linux-ppc64le</a></td></tr>
+        <tr><td>RISC-V 64 systems</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-riscv64">controli-linux-riscv64</a></td></tr>
+        <tr><td>IBM Z or LinuxONE</td><td><a href="https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-s390x">controli-linux-s390x</a></td></tr>
       </tbody>
     </table>
   </section>

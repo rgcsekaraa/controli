@@ -87,6 +87,8 @@ controli join 1234567
 
 Resolves the code and opens the local browser terminal by default on Windows, macOS, and Linux.
 
+The same 7-digit code can be used by more than one guest until the invite expires. All connected guests see the same terminal output. In full-control mode, all connected guests can send input.
+
 | Flag | Default | Purpose |
 | --- | --- | --- |
 | `--relay-url <url>` | Default relay | Relay to use when resolving a 7-digit code. |

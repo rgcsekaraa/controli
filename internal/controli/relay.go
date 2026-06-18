@@ -29,6 +29,7 @@ type RelayClient struct {
 	RelayURL  string
 	SessionID string
 	Secret    string
+	ClientID  string
 	Timeout   time.Duration
 
 	mu    sync.Mutex
@@ -36,10 +37,15 @@ type RelayClient struct {
 }
 
 func NewRelayClient(relayURL, sessionID, secret string) *RelayClient {
+	clientID, err := NewRandomURLToken(9)
+	if err != nil {
+		clientID = fmt.Sprintf("%d", time.Now().UnixNano())
+	}
 	return &RelayClient{
 		RelayURL:  strings.TrimRight(relayURL, "/"),
 		SessionID: sessionID,
 		Secret:    secret,
+		ClientID:  clientID,
 		Timeout:   35 * time.Second,
 		peers:     map[string]*RelayPeer{},
 	}
@@ -74,7 +80,11 @@ func (c *RelayClient) Close(side string) {
 	if peer != nil {
 		peer.Close()
 	}
-	_ = c.post("/v1/close", map[string]any{"side": side}, nil)
+	payload := map[string]any{"side": side}
+	if side == SideClient {
+		payload["client_id"] = c.ClientID
+	}
+	_ = c.post("/v1/close", payload, nil)
 }
 
 func (c *RelayClient) RegisterInvite(invite RelayToken) error {
@@ -187,6 +197,9 @@ func (c *RelayClient) websocketURL(side string) (string, error) {
 	query.Set("session_id", c.SessionID)
 	query.Set("secret", c.Secret)
 	query.Set("side", side)
+	if side == SideClient {
+		query.Set("client_id", c.ClientID)
+	}
 	parsed.RawQuery = query.Encode()
 	return parsed.String(), nil
 }

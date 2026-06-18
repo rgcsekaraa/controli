@@ -14,7 +14,7 @@ The current implementation is a native Go binary.
 
 ## Install
 
-Download the binary that matches the guest or host machine. Current release: [v0.4.0](https://github.com/rgcsekaraa/controli/releases/tag/v0.4.0).
+Download the binary that matches the guest or host machine. Current release: [v0.4.1](https://github.com/rgcsekaraa/controli/releases/tag/v0.4.1).
 
 Release page:
 
@@ -38,10 +38,10 @@ https://rgcsekaraa.github.io/controli/commands
 
 | Machine | Download |
 | --- | --- |
-| Most Intel or AMD PCs | [controli-windows-amd64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-amd64.exe) |
-| Older 32-bit PCs | [controli-windows-386.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-386.exe) |
-| Windows on ARM64 | [controli-windows-arm64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-arm64.exe) |
-| Older Windows ARM devices | [controli-windows-arm.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-arm.exe) |
+| Most Intel or AMD PCs | [controli-windows-amd64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-windows-amd64.exe) |
+| Older 32-bit PCs | [controli-windows-386.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-windows-386.exe) |
+| Windows on ARM64 | [controli-windows-arm64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-windows-arm64.exe) |
+| Older Windows ARM devices | [controli-windows-arm.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-windows-arm.exe) |
 
 Quick download:
 
@@ -54,8 +54,8 @@ Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/latest/d
 
 | Machine | Download |
 | --- | --- |
-| Apple Silicon | [controli-darwin-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-darwin-arm64) |
-| Intel Mac | [controli-darwin-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-darwin-amd64) |
+| Apple Silicon | [controli-darwin-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-darwin-arm64) |
+| Intel Mac | [controli-darwin-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-darwin-amd64) |
 
 Quick download for Apple Silicon:
 
@@ -69,14 +69,14 @@ chmod +x controli
 
 | Machine | Download |
 | --- | --- |
-| Most Intel or AMD desktops and servers | [controli-linux-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-amd64) |
-| Older 32-bit Intel or AMD systems | [controli-linux-386](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-386) |
-| ARM64 servers and boards | [controli-linux-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-arm64) |
-| ARMv7 boards | [controli-linux-armv7](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-armv7) |
-| ARMv6 boards | [controli-linux-armv6](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-armv6) |
-| PowerPC 64 little-endian servers | [controli-linux-ppc64le](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-ppc64le) |
-| RISC-V 64 systems | [controli-linux-riscv64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-riscv64) |
-| IBM Z or LinuxONE | [controli-linux-s390x](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-s390x) |
+| Most Intel or AMD desktops and servers | [controli-linux-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-amd64) |
+| Older 32-bit Intel or AMD systems | [controli-linux-386](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-386) |
+| ARM64 servers and boards | [controli-linux-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-arm64) |
+| ARMv7 boards | [controli-linux-armv7](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-armv7) |
+| ARMv6 boards | [controli-linux-armv6](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-armv6) |
+| PowerPC 64 little-endian servers | [controli-linux-ppc64le](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-ppc64le) |
+| RISC-V 64 systems | [controli-linux-riscv64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-riscv64) |
+| IBM Z or LinuxONE | [controli-linux-s390x](https://github.com/rgcsekaraa/controli/releases/download/v0.4.1/controli-linux-s390x) |
 
 Quick download for most PCs and servers:
 
@@ -130,6 +130,8 @@ controli host tunnel --workspace main --public-url https://cli.example.com --min
 ```
 
 Send the printed 7-digit code to the guest.
+
+The same 7-digit code can be used by multiple guests until it expires. They all see the same terminal output. In full-control mode, all connected guests can type.
 
 ## Relay Setup
 

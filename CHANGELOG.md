@@ -6,6 +6,13 @@ All notable changes to Controli will be documented in this file.
 
 - No unreleased changes.
 
+## 0.4.1
+
+- Allowed multiple guests to join the same live session with the same 7-digit code until the invite expires.
+- Added per-client relay socket IDs so relay fallback no longer replaces the first guest when another guest joins.
+- Broadcast host terminal output to all connected relay guests.
+- Documented same-code multi-guest behavior.
+
 ## 0.4.0
 
 - Added tunnel mode for long sessions with `controli host tunnel`.

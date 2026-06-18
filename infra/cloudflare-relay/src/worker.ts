@@ -113,6 +113,7 @@ export default {
         service: "controli-relay",
         websocket_path: "/v1/ws",
         invite_store: "kv",
+        relay_clients: "multiple",
         max_pending_messages: MAX_PENDING_MESSAGES,
         max_pending_bytes: MAX_PENDING_BYTES,
       });
@@ -257,7 +258,7 @@ export class InviteCode implements DurableObject {
 
 export class RelaySession implements DurableObject {
   private readonly state: DurableObjectState;
-  private sockets: Map<Side, WebSocket> = new Map();
+  private sockets: Map<string, WebSocket> = new Map();
   private pending: Map<Side, RelayPayload[]> = new Map([
     ["host", []],
     ["client", []],
@@ -267,7 +268,7 @@ export class RelaySession implements DurableObject {
     ["client", 0],
   ]);
   private secretHash: string | null = null;
-  private connectedAt: Map<Side, string> = new Map();
+  private connectedAt: Map<string, string> = new Map();
   private lastActivityAt: string | null = null;
   private droppedMessages = 0;
 
@@ -296,19 +297,21 @@ export class RelaySession implements DurableObject {
       const payload = await request.json<Record<string, unknown>>().catch(() => null);
       const secret = typeof payload?.secret === "string" ? payload.secret : null;
       const side = typeof payload?.side === "string" ? payload.side : null;
+      const clientId = typeof payload?.client_id === "string" ? payload.client_id : null;
       if (!secret || !isSide(side)) {
         return jsonResponse(400, { error: "secret and side are required" });
       }
       if (!(await this.authorize(secret))) {
         return jsonResponse(403, { error: "invalid session secret" });
       }
-      this.finalClose(side);
+      this.finalClose(side, clientId);
       return jsonResponse(200, { ok: true });
     }
 
     const sessionId = getParam(url, "session_id");
     const secret = getParam(url, "secret");
     const side = getParam(url, "side");
+    const clientId = getParam(url, "client_id");
     if (!sessionId || !secret || !isSide(side)) {
       return jsonResponse(400, { error: "session_id, secret, and side are required" });
     }
@@ -319,7 +322,7 @@ export class RelaySession implements DurableObject {
 
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
-    this.attach(side, server);
+    this.attach(side, server, clientId);
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -334,16 +337,17 @@ export class RelaySession implements DurableObject {
     return timingSafeEqual(this.secretHash, digest);
   }
 
-  private attach(side: Side, socket: WebSocket): void {
-    const old = this.sockets.get(side);
+  private attach(side: Side, socket: WebSocket, clientId: string | null): void {
+    const key = socketKey(side, clientId);
+    const old = side === "host" ? this.sockets.get(key) : null;
     if (old) {
       old.close(1012, "replaced");
     }
 
     socket.accept();
-    this.sockets.set(side, socket);
-    this.connectedAt.set(side, new Date().toISOString());
-    this.flush(side);
+    this.sockets.set(key, socket);
+    this.connectedAt.set(key, new Date().toISOString());
+    this.flush(side, key);
 
     socket.addEventListener("message", (event) => {
       this.forward(side, event.data).catch(() => {
@@ -351,14 +355,14 @@ export class RelaySession implements DurableObject {
       });
     });
 
-    socket.addEventListener("close", (event) => this.detach(side, event.code, event.reason));
-    socket.addEventListener("error", () => this.detach(side, 1011, "socket error"));
+    socket.addEventListener("close", (event) => this.detach(side, key, event.code, event.reason));
+    socket.addEventListener("error", () => this.detach(side, key, 1011, "socket error"));
   }
 
-  private detach(side: Side, code: number, reason: string): void {
-    const socket = this.sockets.get(side);
-    this.sockets.delete(side);
-    this.connectedAt.delete(side);
+  private detach(side: Side, key: string, code: number, reason: string): void {
+    const socket = this.sockets.get(key);
+    this.sockets.delete(key);
+    this.connectedAt.delete(key);
     const finalClose = code === FINAL_CLOSE_CODE && reason === FINAL_CLOSE_REASON;
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.close(1000, "closed");
@@ -366,24 +370,44 @@ export class RelaySession implements DurableObject {
     if (!finalClose) {
       return;
     }
-    const peer = this.sockets.get(peerSide(side));
-    if (peer && peer.readyState === WebSocket.OPEN) {
-      peer.close(FINAL_CLOSE_CODE, `${side} disconnected`);
+    if (side === "host") {
+      this.closeClients("host disconnected");
     }
   }
 
   private async forward(from: Side, data: unknown): Promise<void> {
     const payload = await normalizePayload(data);
     this.lastActivityAt = new Date().toISOString();
-    this.deliver(peerSide(from), payload);
+    if (from === "host") {
+      this.deliverClients(payload);
+      return;
+    }
+    this.deliverHost(payload);
   }
 
-  private deliver(to: Side, payload: RelayPayload): void {
-    const socket = this.sockets.get(to);
+  private deliverHost(payload: RelayPayload): void {
+    const socket = this.sockets.get("host");
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(payload);
       return;
     }
+    this.queuePending("host", payload);
+  }
+
+  private deliverClients(payload: RelayPayload): void {
+    const clients = this.clientSockets();
+    if (clients.length > 0) {
+      for (const socket of clients) {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(payload);
+        }
+      }
+      return;
+    }
+    this.queuePending("client", payload);
+  }
+
+  private queuePending(to: Side, payload: RelayPayload): void {
     const queue = this.pending.get(to) ?? [];
     const bytes = payloadBytes(payload);
     queue.push(payload);
@@ -398,8 +422,8 @@ export class RelaySession implements DurableObject {
     this.pending.set(to, queue);
   }
 
-  private flush(side: Side): void {
-    const socket = this.sockets.get(side);
+  private flush(side: Side, key: string): void {
+    const socket = this.sockets.get(key);
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       return;
     }
@@ -413,16 +437,27 @@ export class RelaySession implements DurableObject {
     }
   }
 
-  private finalClose(side: Side): void {
-    for (const current of [side, peerSide(side)] as Side[]) {
-      const socket = this.sockets.get(current);
-      this.sockets.delete(current);
-      this.connectedAt.delete(current);
-      this.pending.set(current, []);
-      this.pendingBytes.set(current, 0);
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.close(FINAL_CLOSE_CODE, `${side} disconnected`);
+  private finalClose(side: Side, clientId: string | null): void {
+    if (side === "host") {
+      const host = this.sockets.get("host");
+      this.sockets.delete("host");
+      this.connectedAt.delete("host");
+      this.pending.set("host", []);
+      this.pending.set("client", []);
+      this.pendingBytes.set("host", 0);
+      this.pendingBytes.set("client", 0);
+      if (host && host.readyState === WebSocket.OPEN) {
+        host.close(FINAL_CLOSE_CODE, "host disconnected");
       }
+      this.closeClients("host disconnected");
+      return;
+    }
+    const key = socketKey("client", clientId);
+    const socket = this.sockets.get(key);
+    this.sockets.delete(key);
+    this.connectedAt.delete(key);
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.close(FINAL_CLOSE_CODE, "client disconnected");
     }
   }
 
@@ -431,11 +466,10 @@ export class RelaySession implements DurableObject {
       ok: true,
       connected: {
         host: this.sockets.has("host"),
-        client: this.sockets.has("client"),
+        clients: this.clientSockets().length,
       },
       connected_at: {
         host: this.connectedAt.get("host") ?? null,
-        client: this.connectedAt.get("client") ?? null,
       },
       pending_messages: {
         host: this.pending.get("host")?.length ?? 0,
@@ -453,10 +487,36 @@ export class RelaySession implements DurableObject {
       },
     };
   }
+
+  private clientSockets(): WebSocket[] {
+    const sockets: WebSocket[] = [];
+    for (const [key, socket] of this.sockets) {
+      if (key.startsWith("client:")) {
+        sockets.push(socket);
+      }
+    }
+    return sockets;
+  }
+
+  private closeClients(reason: string): void {
+    for (const [key, socket] of this.sockets) {
+      if (!key.startsWith("client:")) {
+        continue;
+      }
+      this.sockets.delete(key);
+      this.connectedAt.delete(key);
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.close(FINAL_CLOSE_CODE, reason);
+      }
+    }
+  }
 }
 
-function peerSide(side: Side): Side {
-  return side === "host" ? "client" : "host";
+function socketKey(side: Side, clientId: string | null): string {
+  if (side === "host") {
+    return "host";
+  }
+  return `client:${clientId && clientId.trim() ? clientId : crypto.randomUUID()}`;
 }
 
 function payloadBytes(payload: RelayPayload): number {

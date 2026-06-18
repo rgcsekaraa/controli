@@ -11,6 +11,8 @@ The host serves the browser terminal from a local HTTP/WebSocket server. A named
 
 Terminal bytes in tunnel mode do not pass through Durable Objects.
 
+Multiple guests can claim the same 7-digit code until it expires. The host broadcasts terminal output to every connected guest.
+
 ## Relay Fallback
 
 The relay protocol has two sides:
@@ -19,6 +21,8 @@ The relay protocol has two sides:
 - `client`
 
 Terminal bytes are sent as WebSocket binary messages. Resize events are encoded as control messages with a reserved prefix.
+
+Relay fallback supports multiple client sockets per session. Host output is broadcast to every connected client. Client input is forwarded to the single host shell.
 
 Short invites store the full token in Workers KV for a limited time. The guest sends the 7-digit code to claim that token.
 
