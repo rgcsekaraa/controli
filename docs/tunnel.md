@@ -40,15 +40,23 @@ Keep `cloudflared` running while the session is active.
 ## Start a Host Session
 
 ```bash
-controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440 --mode full
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 0 --mode full
 ```
 
 Send the printed 7-digit code to the guest.
 
-The host must keep both processes running:
+The host should keep both processes running:
 
 - `cloudflared tunnel run <tunnel-name>`
 - `controli host tunnel ...`
+
+On macOS and Linux, Controli uses `tmux` by default when it is installed. The shell keeps running inside that `tmux` session if Controli detaches or a network path drops. Start the same workspace again to reattach to the same shell.
+
+```bash
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 0 --persist-name main
+```
+
+The host machine still must stay awake and powered on. A reboot, shutdown, user logout that kills `tmux`, or the shell process exiting ends the live shell.
 
 ## Guest Join
 

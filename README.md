@@ -128,12 +128,14 @@ cloudflared tunnel run <tunnel-name>
 Then start Controli:
 
 ```bash
-controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440 --mode full
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 0 --mode full
 ```
 
 Send the printed 7-digit code to the guest.
 
 Only one guest can be connected to a live session at a time. The same 7-digit code can be used again while the invite has not expired. A reconnect from the same guest keeps the existing approval; a different guest requires fresh host approval before input reaches the shell.
+
+On macOS and Linux, install `tmux` for persistent hosted shells. Controli uses it by default when available, so the shell keeps running if the Controli host process detaches. Start the same workspace again to reattach.
 
 ## Relay Setup
 
@@ -176,7 +178,7 @@ Controli reads workspaces from `~/.controli/state.json`. Minimal example:
 Start a long tunnel session:
 
 ```bash
-controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440 --mode full
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 0 --mode full
 ```
 
 Start a relay fallback session:
@@ -222,7 +224,8 @@ controli join 1234567 --console
 Common host commands:
 
 ```bash
-controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 0
+controli host tunnel --workspace main --public-url https://cli.example.com --persist-name main
 controli host share --workspace main --mode full
 controli host share --workspace main --mode view
 controli host share --workspace main --mode approve

@@ -4,6 +4,8 @@ All notable changes to Controli will be documented in this file.
 
 ## Unreleased
 
+- Added persistent macOS and Linux host shells through `tmux` when available.
+- Added `--persist`, `--persist-name`, and `--minutes 0` for no fixed Controli session expiry.
 - Kept host approval during transient reconnects from the same guest.
 - Added browser terminal WebSocket auto-retry with stable per-browser guest IDs.
 - Fixed relay socket replacement so stale close events cannot remove a freshly reconnected socket.

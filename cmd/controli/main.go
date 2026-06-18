@@ -156,6 +156,8 @@ func cmdHost(args []string) int {
 	auditLog := flags.String("audit-log", "", "audit log path, or off")
 	auditInput := flags.Bool("audit-input", false, "record typed input in the audit log")
 	statusInterval := flags.Duration("status-interval", 0, "print host session status on an interval, for example 30s")
+	persist := flags.Bool("persist", true, "keep the shell in a persistent host session when supported")
+	persistName := flags.String("persist-name", "", "stable persistent shell name")
 	if err := flags.Parse(args[1:]); err != nil {
 		return 2
 	}
@@ -193,7 +195,7 @@ func cmdHost(args []string) int {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return 1
 	}
-	expiresAt := time.Now().UTC().Add(time.Duration(*minutes) * time.Minute).Truncate(time.Second).Format(time.RFC3339)
+	expiresAt := expiryValue(*minutes)
 	token := controli.RelayToken{
 		Kind:      controli.RelayTokenKind,
 		Version:   1,
@@ -214,7 +216,7 @@ func cmdHost(args []string) int {
 		}
 		fmt.Println(encoded)
 	} else {
-		code, err := registerShortInvite(activeRelayURL, token)
+		code, err := registerShortInvite(activeRelayURL, token, *minutes)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "error:", err)
 			return 1
@@ -222,7 +224,7 @@ func cmdHost(args []string) int {
 		fmt.Println("Send this 7-digit code to the guest (treat it like a password):")
 		fmt.Println(code)
 		fmt.Println()
-		fmt.Println("expires_at:", expiresAt)
+		fmt.Println("expires_at:", printableExpiry(expiresAt))
 		fmt.Println("If short-code lookup fails, print a full code with: controli host share --workspace <name> --long-code")
 	}
 	if *printOnly {
@@ -240,6 +242,7 @@ func cmdHost(args []string) int {
 	fmt.Println("relay session is ready; send the code to the guest and keep this process running")
 	fmt.Println("room:", firstNonEmpty(*room, *workspaceName))
 	fmt.Println("permission_mode:", mode)
+	fmt.Println("persistent_shell:", *persist)
 	if activeAuditLog != "" {
 		fmt.Println("audit_log:", activeAuditLog)
 	}
@@ -256,6 +259,8 @@ func cmdHost(args []string) int {
 		AuditLogPath:   activeAuditLog,
 		AuditInput:     *auditInput,
 		StatusInterval: *statusInterval,
+		Persist:        *persist,
+		PersistName:    *persistName,
 	})
 }
 
@@ -276,6 +281,8 @@ func cmdHostTunnel(args []string) int {
 	auditLog := flags.String("audit-log", "", "audit log path, or off")
 	auditInput := flags.Bool("audit-input", false, "record typed input in the audit log")
 	statusInterval := flags.Duration("status-interval", 0, "print host session status on an interval, for example 30s")
+	persist := flags.Bool("persist", true, "keep the shell in a persistent host session when supported")
+	persistName := flags.String("persist-name", "", "stable persistent shell name")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -313,7 +320,7 @@ func cmdHostTunnel(args []string) int {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return 1
 	}
-	expiresAt := time.Now().UTC().Add(time.Duration(*minutes) * time.Minute).Truncate(time.Second).Format(time.RFC3339)
+	expiresAt := expiryValue(*minutes)
 	token := controli.RelayToken{
 		Kind:      controli.RelayTokenKind,
 		Version:   1,
@@ -335,7 +342,7 @@ func cmdHostTunnel(args []string) int {
 		}
 		fmt.Println(encoded)
 	} else {
-		code, err := registerShortInvite(activeRelayURL, token)
+		code, err := registerShortInvite(activeRelayURL, token, *minutes)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "error:", err)
 			return 1
@@ -343,7 +350,7 @@ func cmdHostTunnel(args []string) int {
 		fmt.Println("Send this 7-digit code to the guest (treat it like a password):")
 		fmt.Println(code)
 		fmt.Println()
-		fmt.Println("expires_at:", expiresAt)
+		fmt.Println("expires_at:", printableExpiry(expiresAt))
 		fmt.Println("transport:", controli.TransportTunnel)
 	}
 	if *printOnly {
@@ -361,6 +368,7 @@ func cmdHostTunnel(args []string) int {
 	fmt.Println("tunnel session is ready; keep cloudflared and this process running")
 	fmt.Println("room:", firstNonEmpty(*room, *workspaceName))
 	fmt.Println("permission_mode:", mode)
+	fmt.Println("persistent_shell:", *persist)
 	fmt.Println("listen:", *listenAddr)
 	if activeAuditLog != "" {
 		fmt.Println("audit_log:", activeAuditLog)
@@ -379,13 +387,15 @@ func cmdHostTunnel(args []string) int {
 			AuditLogPath:   activeAuditLog,
 			AuditInput:     *auditInput,
 			StatusInterval: *statusInterval,
+			Persist:        *persist,
+			PersistName:    *persistName,
 		},
 		ListenAddr: *listenAddr,
 		PublicURL:  strings.TrimRight(*publicURL, "/"),
 	})
 }
 
-func registerShortInvite(relayURL string, token controli.RelayToken) (string, error) {
+func registerShortInvite(relayURL string, token controli.RelayToken, minutes int) (string, error) {
 	client := controli.NewRelayClient(relayURL, token.SessionID, token.Secret)
 	var lastErr error
 	for i := 0; i < 10; i++ {
@@ -394,7 +404,7 @@ func registerShortInvite(relayURL string, token controli.RelayToken) (string, er
 			return "", err
 		}
 		token.Code = code
-		token.InviteExpiresAt = time.Now().UTC().Add(15 * time.Minute).Truncate(time.Second).Format(time.RFC3339)
+		token.InviteExpiresAt = shortInviteExpiryValue(minutes)
 		if err := client.RegisterInvite(token); err != nil {
 			lastErr = err
 			continue
@@ -402,6 +412,30 @@ func registerShortInvite(relayURL string, token controli.RelayToken) (string, er
 		return code, nil
 	}
 	return "", fmt.Errorf("could not register short invite code: %w", lastErr)
+}
+
+func expiryValue(minutes int) string {
+	if minutes <= 0 {
+		return controli.NoExpiryValue
+	}
+	return time.Now().UTC().Add(time.Duration(minutes) * time.Minute).Truncate(time.Second).Format(time.RFC3339)
+}
+
+func shortInviteExpiryValue(minutes int) string {
+	if minutes <= 0 {
+		return controli.NoExpiryValue
+	}
+	if minutes > 15 {
+		minutes = 15
+	}
+	return time.Now().UTC().Add(time.Duration(minutes) * time.Minute).Truncate(time.Second).Format(time.RFC3339)
+}
+
+func printableExpiry(value string) string {
+	if strings.EqualFold(strings.TrimSpace(value), controli.NoExpiryValue) {
+		return "never"
+	}
+	return value
 }
 
 func cmdJoin(args []string) int {

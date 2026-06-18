@@ -41,6 +41,12 @@ func TestShortCodeNormalization(t *testing.T) {
 	}
 }
 
+func TestNoExpiryValueDoesNotExpire(t *testing.T) {
+	if IsExpired(NoExpiryValue) {
+		t.Fatal("never expiry should not expire")
+	}
+}
+
 func TestWebTerminalHTMLUsesEmbeddedAssets(t *testing.T) {
 	if len(webAsset("xterm.js")) == 0 {
 		t.Fatal("xterm.js asset is empty")

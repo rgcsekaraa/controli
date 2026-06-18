@@ -15,9 +15,10 @@ func RunHostTunnelShellWithOptions(options TunnelHostOptions) int {
 	if shell == "" {
 		shell = DefaultShell()
 	}
-	command := exec.Command(shellArgs(shell)[0], shellArgs(shell)[1:]...)
-	command.Dir = options.Cwd
-	command.Env = shellEnv()
+	command, backend, persistName := newHostCommand(options.HostOptions, shell)
+	if options.Persist && backend != "tmux" {
+		_, _ = os.Stderr.WriteString("warning: tmux is not installed; shell cannot survive host process exit\n")
+	}
 	tty, err := pty.StartWithSize(command, &pty.Winsize{Rows: 24, Cols: 80})
 	if err != nil {
 		_, _ = os.Stderr.WriteString("failed to start PTY: " + err.Error() + "\n")
@@ -37,7 +38,13 @@ func RunHostTunnelShellWithOptions(options TunnelHostOptions) int {
 		"shell":      shell,
 		"mode":       options.Mode,
 		"transport":  TransportTunnel,
+		"backend":    backend,
+		"persist":    options.Persist,
+		"persist_id": persistName,
 	})
+	if backend == "tmux" {
+		_, _ = os.Stderr.WriteString("persistent_shell: " + persistentBackendMessage(backend, persistName) + "\n")
+	}
 	stats := NewSessionStats()
 	gate := NewHostGate(options.Mode, options.RequireApprove)
 	server := newTunnelTerminalServer(
@@ -74,7 +81,7 @@ func RunHostTunnelShellWithOptions(options TunnelHostOptions) int {
 	}()
 	go func() {
 		err := command.Wait()
-		audit.Log("host_stop", map[string]any{"stats": stats.Summary(), "transport": TransportTunnel})
+		audit.Log("host_stop", map[string]any{"stats": stats.Summary(), "transport": TransportTunnel, "backend": backend, "persist_id": persistName})
 		closeOnce(server.stop)
 		if err != nil {
 			var exitErr *exec.ExitError

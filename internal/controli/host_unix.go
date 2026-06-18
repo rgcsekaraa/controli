@@ -56,9 +56,10 @@ func RunHostRelayShellWithOptions(options HostOptions) int {
 	if shell == "" {
 		shell = DefaultShell()
 	}
-	command := exec.Command(shellArgs(shell)[0], shellArgs(shell)[1:]...)
-	command.Dir = options.Cwd
-	command.Env = shellEnv()
+	command, backend, persistName := newHostCommand(options, shell)
+	if options.Persist && backend != "tmux" {
+		_, _ = os.Stderr.WriteString("warning: tmux is not installed; shell cannot survive host process exit\n")
+	}
 	tty, err := pty.StartWithSize(command, &pty.Winsize{Rows: 24, Cols: 80})
 	if err != nil {
 		_, _ = os.Stderr.WriteString("failed to start PTY: " + err.Error() + "\n")
@@ -83,7 +84,13 @@ func RunHostRelayShellWithOptions(options HostOptions) int {
 		"cwd":        options.Cwd,
 		"shell":      shell,
 		"mode":       options.Mode,
+		"backend":    backend,
+		"persist":    options.Persist,
+		"persist_id": persistName,
 	})
+	if backend == "tmux" {
+		_, _ = os.Stderr.WriteString("persistent_shell: " + persistentBackendMessage(backend, persistName) + "\n")
+	}
 	stats := NewSessionStats()
 	gate := NewHostGate(options.Mode, options.RequireApprove)
 	stop := make(chan struct{})
@@ -134,7 +141,7 @@ func RunHostRelayShellWithOptions(options HostOptions) int {
 	err = command.Wait()
 	close(stop)
 	relay.Close(SideHost)
-	audit.Log("host_stop", map[string]any{"stats": stats.Summary()})
+	audit.Log("host_stop", map[string]any{"stats": stats.Summary(), "backend": backend, "persist_id": persistName})
 	if err == nil {
 		return 0
 	}

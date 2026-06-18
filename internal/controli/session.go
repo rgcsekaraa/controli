@@ -39,6 +39,8 @@ type HostOptions struct {
 	AuditLogPath   string
 	AuditInput     bool
 	StatusInterval time.Duration
+	Persist        bool
+	PersistName    string
 }
 
 type ControlMessage struct {

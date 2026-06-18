@@ -18,8 +18,10 @@ Starts the configured workspace shell and serves the browser terminal locally fo
 | `--room <name>` | No | Workspace name | Room label shown to the guest. |
 | `--relay-url <url>` | No | Configured relay or default relay | Worker URL used only for 7-digit invite lookup. |
 | `--name <name>` | No | `guest` | Guest label stored in the invite. |
-| `--minutes <n>` | No | `1440` | Session lifetime in minutes. |
+| `--minutes <n>` | No | `1440` | Session lifetime in minutes. Use `0` for no fixed Controli expiry. |
 | `--shell <path>` | No | Workspace shell or default shell | Shell to start for this session. |
+| `--persist` | No | `true` | Keep macOS/Linux shells in a persistent `tmux` session when available. |
+| `--persist-name <name>` | No | `controli-<workspace>` | Stable `tmux` session name for reattaching. |
 | `--print-only` | No | `false` | Print a code without starting the shell. |
 | `--long-code` | No | `false` | Print the full self-contained code instead of a 7-digit code. |
 | `--mode full` | No | `full` | Guest can type after host approval. |
@@ -34,7 +36,8 @@ Starts the configured workspace shell and serves the browser terminal locally fo
 Examples:
 
 ```bash
-controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 0
+controli host tunnel --workspace main --public-url https://cli.example.com --persist-name main
 controli host tunnel --workspace main --public-url https://cli.example.com --mode view
 controli host tunnel --workspace main --public-url https://cli.example.com --listen 127.0.0.1:9000
 controli host tunnel --workspace main --public-url https://cli.example.com --approve=false
@@ -54,8 +57,10 @@ Starts the configured workspace shell, registers a 7-digit invite code, and send
 | `--room <name>` | No | Workspace name | Room label shown to the guest. |
 | `--relay-url <url>` | No | Configured relay | Override the relay for this share. |
 | `--name <name>` | No | `guest` | Guest label stored in the invite. |
-| `--minutes <n>` | No | `120` | Session lifetime in minutes. |
+| `--minutes <n>` | No | `120` | Session lifetime in minutes. Use `0` for no fixed Controli expiry. |
 | `--shell <path>` | No | Workspace shell or default shell | Shell to start for this session. |
+| `--persist` | No | `true` | Keep macOS/Linux shells in a persistent `tmux` session when available. |
+| `--persist-name <name>` | No | `controli-<workspace>` | Stable `tmux` session name for reattaching. |
 | `--print-only` | No | `false` | Print a code without starting the shell. |
 | `--long-code` | No | `false` | Print the full self-contained code instead of a 7-digit code. |
 | `--mode full` | No | `full` | Guest can type after host approval. |
@@ -159,7 +164,7 @@ On Windows, the updater downloads a `.new.exe` file because Windows locks the ru
 Mac host, Windows guest with tunnel mode:
 
 ```bash
-controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440 --mode full
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 0 --mode full
 ```
 
 The Windows guest runs:

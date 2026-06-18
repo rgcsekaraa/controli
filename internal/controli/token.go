@@ -17,6 +17,7 @@ const (
 	RelayTokenKind  = "controli-relay-token"
 	SessionPrefix   = "ct1_"
 	ShortCodeLength = 7
+	NoExpiryValue   = "never"
 )
 
 type RelayToken struct {
@@ -136,6 +137,9 @@ func NormalizeShortCode(value string) string {
 }
 
 func IsExpired(value string) bool {
+	if strings.TrimSpace(value) == "" || strings.EqualFold(strings.TrimSpace(value), NoExpiryValue) {
+		return false
+	}
 	t, err := time.Parse(time.RFC3339, value)
 	return err != nil || time.Now().After(t)
 }

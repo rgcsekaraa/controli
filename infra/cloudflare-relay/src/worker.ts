@@ -93,6 +93,9 @@ function buildInvite(payload: Record<string, unknown> | null): InvitePayload | n
 }
 
 function isExpired(value: string): boolean {
+  if (value.trim() === "" || value.trim().toLowerCase() === "never") {
+    return false;
+  }
   const time = Date.parse(value);
   return Number.isNaN(time) || time < Date.now();
 }
@@ -101,7 +104,10 @@ function inviteKey(code: string): string {
   return `invite:${code}`;
 }
 
-function inviteTTL(value: string): number {
+function inviteTTL(value: string): number | null {
+  if (value.trim() === "" || value.trim().toLowerCase() === "never") {
+    return null;
+  }
   const seconds = Math.floor((Date.parse(value) - Date.now()) / 1000);
   return Math.max(0, seconds);
 }
@@ -137,10 +143,11 @@ export default {
         return jsonResponse(409, { error: "short code collision; try again" });
       }
       const ttl = inviteTTL(invite.invite_expires_at);
-      if (ttl <= 0) {
+      if (ttl !== null && ttl <= 0) {
         return jsonResponse(400, { error: "invite is already expired" });
       }
-      await env.INVITES_KV.put(inviteKey(code), JSON.stringify(invite), { expirationTtl: ttl });
+      const options = ttl === null ? undefined : { expirationTtl: ttl };
+      await env.INVITES_KV.put(inviteKey(code), JSON.stringify(invite), options);
       return jsonResponse(200, { ok: true });
     }
 

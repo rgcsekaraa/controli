@@ -24,7 +24,7 @@ controli relay configure --url wss://controli-relay.example.workers.dev
 Start a long tunnel session and print an invite code:
 
 ```bash
-controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 0
 ```
 
 Join from the guest machine:

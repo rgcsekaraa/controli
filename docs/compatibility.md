@@ -32,7 +32,7 @@ The intended support goal is:
 | Windows arm | Yes | Best effort |
 | Windows arm64 | Yes | Best effort |
 
-macOS and Linux hosting use a real PTY. Windows hosting uses a stdio backend until ConPTY is added.
+macOS and Linux hosting use a real PTY and can keep shells alive through `tmux` when it is installed. Windows hosting uses a stdio backend until ConPTY is added.
 
 ## Release Assets
 
@@ -59,5 +59,6 @@ macOS and Linux hosting use a real PTY. Windows hosting uses a stdio backend unt
 - Very old Linux kernels may not run current Go-built binaries.
 - Host mode requires a working shell.
 - macOS and Linux host mode requires PTY support.
+- Persistent macOS and Linux host sessions require `tmux`.
 - Tunnel join mode requires outbound HTTPS and WebSocket access to the public tunnel hostname.
 - Relay fallback mode requires outbound HTTPS and WebSocket access to the relay.
