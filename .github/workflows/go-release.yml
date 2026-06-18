@@ -6,6 +6,9 @@ on:
       - "v*"
   workflow_dispatch:
 
+env:
+  WINDOWS_COMPAT_RELEASE: v0.4.0
+
 permissions:
   contents: write
 
@@ -65,7 +68,16 @@ jobs:
         with:
           go-version-file: go.mod
       - run: go test ./...
-      - run: CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOARM=${{ matrix.goarm }} go build -trimpath -ldflags="-s -w" -o dist/${{ matrix.name }} ./cmd/controli
+      - name: Build
+        if: matrix.goos != 'windows'
+        run: CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOARM=${{ matrix.goarm }} go build -trimpath -ldflags="-s -w" -o dist/${{ matrix.name }} ./cmd/controli
+      - name: Reuse Windows compatibility binary
+        if: matrix.goos == 'windows'
+        run: |
+          mkdir -p dist
+          curl -fsSL \
+            -o "dist/${{ matrix.name }}" \
+            "https://github.com/${{ github.repository }}/releases/download/${WINDOWS_COMPAT_RELEASE}/${{ matrix.name }}"
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.name }}

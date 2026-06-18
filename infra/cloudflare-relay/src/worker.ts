@@ -509,7 +509,7 @@ export class RelaySession implements DurableObject {
   private clientSockets(): WebSocket[] {
     const sockets: WebSocket[] = [];
     for (const [key, socket] of this.sockets) {
-      if (key.startsWith("client:")) {
+      if (isClientKey(key)) {
         sockets.push(socket);
       }
     }
@@ -526,7 +526,7 @@ export class RelaySession implements DurableObject {
 
   private closeClients(reason: string): void {
     for (const [key, socket] of this.sockets) {
-      if (!key.startsWith("client:")) {
+      if (!isClientKey(key)) {
         continue;
       }
       this.sockets.delete(key);
@@ -542,7 +542,12 @@ function socketKey(side: Side, clientId: string | null): string {
   if (side === "host") {
     return "host";
   }
-  return `client:${clientId && clientId.trim() ? clientId : crypto.randomUUID()}`;
+  const trimmed = clientId?.trim();
+  return trimmed ? `client:${trimmed}` : "client";
+}
+
+function isClientKey(key: string): boolean {
+  return key === "client" || key.startsWith("client:");
 }
 
 function payloadBytes(payload: RelayPayload): number {
