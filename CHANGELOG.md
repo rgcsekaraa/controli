@@ -4,7 +4,25 @@ All notable changes to Controli will be documented in this file.
 
 ## Unreleased
 
-- Made the Go binary the source of truth for host sharing, joining, relay configuration, and release builds.
+- No unreleased changes.
+
+## 0.4.0
+
+- Added tunnel mode for long sessions with `controli host tunnel`.
+- Added direct browser terminal serving from the host over a named Cloudflare Tunnel.
+- Moved 7-digit invite storage from Durable Objects to Workers KV.
+- Kept Durable Object relay mode as fallback through `controli host share`.
+- Added tunnel mode documentation, command reference updates, and long-session troubleshooting.
+- Updated the browser terminal to use `wss://` automatically on HTTPS pages.
+
+## 0.3.0
+
+- Added host approval prompt.
+- Added permission modes: `full`, `view`, and `approve`.
+- Added audit logs and session status output.
+- Added Windows hosting through a stdio backend.
+- Added byte-bounded relay queues and stronger reconnect behavior.
+- Added `controli update`, install scripts, and expanded command documentation.
 
 ## 0.2.1-go-alpha
 

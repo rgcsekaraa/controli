@@ -1,6 +1,6 @@
 # Controli
 
-Controli is a cross-platform CLI sharing tool. The host starts a shell session, gets a 7-digit code, and the guest joins from another machine through an outbound Cloudflare WebSocket relay.
+Controli is a cross-platform CLI sharing tool. The host starts a shell session, gets a 7-digit code, and the guest joins from another machine through a browser terminal.
 
 The current implementation is a native Go binary.
 
@@ -8,11 +8,13 @@ The current implementation is a native Go binary.
 
 - Host: macOS and Linux/Ubuntu using a real PTY. Windows hosting uses a stdio backend.
 - Guest: Windows, macOS, and Linux/Ubuntu.
-- Relay: Cloudflare Worker with Durable Objects.
+- Long sessions: Cloudflare Tunnel transport.
+- Short-code lookup: Cloudflare Worker with Workers KV.
+- Relay fallback: Cloudflare Worker with Durable Objects.
 
 ## Install
 
-Download the binary that matches the guest or host machine. Current release: [v0.3.0](https://github.com/rgcsekaraa/controli/releases/tag/v0.3.0).
+Download the binary that matches the guest or host machine. Current release: [v0.4.0](https://github.com/rgcsekaraa/controli/releases/tag/v0.4.0).
 
 Release page:
 
@@ -36,10 +38,10 @@ https://rgcsekaraa.github.io/controli/commands
 
 | Machine | Download |
 | --- | --- |
-| Most Intel or AMD PCs | [controli-windows-amd64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-windows-amd64.exe) |
-| Older 32-bit PCs | [controli-windows-386.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-windows-386.exe) |
-| Windows on ARM64 | [controli-windows-arm64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-windows-arm64.exe) |
-| Older Windows ARM devices | [controli-windows-arm.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-windows-arm.exe) |
+| Most Intel or AMD PCs | [controli-windows-amd64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-amd64.exe) |
+| Older 32-bit PCs | [controli-windows-386.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-386.exe) |
+| Windows on ARM64 | [controli-windows-arm64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-arm64.exe) |
+| Older Windows ARM devices | [controli-windows-arm.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-windows-arm.exe) |
 
 Quick download:
 
@@ -52,8 +54,8 @@ Invoke-WebRequest -Uri "https://github.com/rgcsekaraa/controli/releases/latest/d
 
 | Machine | Download |
 | --- | --- |
-| Apple Silicon | [controli-darwin-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-darwin-arm64) |
-| Intel Mac | [controli-darwin-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-darwin-amd64) |
+| Apple Silicon | [controli-darwin-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-darwin-arm64) |
+| Intel Mac | [controli-darwin-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-darwin-amd64) |
 
 Quick download for Apple Silicon:
 
@@ -67,14 +69,14 @@ chmod +x controli
 
 | Machine | Download |
 | --- | --- |
-| Most Intel or AMD desktops and servers | [controli-linux-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-linux-amd64) |
-| Older 32-bit Intel or AMD systems | [controli-linux-386](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-linux-386) |
-| ARM64 servers and boards | [controli-linux-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-linux-arm64) |
-| ARMv7 boards | [controli-linux-armv7](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-linux-armv7) |
-| ARMv6 boards | [controli-linux-armv6](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-linux-armv6) |
-| PowerPC 64 little-endian servers | [controli-linux-ppc64le](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-linux-ppc64le) |
-| RISC-V 64 systems | [controli-linux-riscv64](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-linux-riscv64) |
-| IBM Z or LinuxONE | [controli-linux-s390x](https://github.com/rgcsekaraa/controli/releases/download/v0.3.0/controli-linux-s390x) |
+| Most Intel or AMD desktops and servers | [controli-linux-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-amd64) |
+| Older 32-bit Intel or AMD systems | [controli-linux-386](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-386) |
+| ARM64 servers and boards | [controli-linux-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-arm64) |
+| ARMv7 boards | [controli-linux-armv7](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-armv7) |
+| ARMv6 boards | [controli-linux-armv6](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-armv6) |
+| PowerPC 64 little-endian servers | [controli-linux-ppc64le](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-ppc64le) |
+| RISC-V 64 systems | [controli-linux-riscv64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-riscv64) |
+| IBM Z or LinuxONE | [controli-linux-s390x](https://github.com/rgcsekaraa/controli/releases/download/v0.4.0/controli-linux-s390x) |
 
 Quick download for most PCs and servers:
 
@@ -104,7 +106,34 @@ Update later:
 controli update
 ```
 
+## Tunnel Setup
+
+Tunnel mode is recommended for long sessions because terminal traffic does not use Durable Objects.
+
+Create a named Cloudflare Tunnel and add a public hostname route:
+
+| Cloudflare field | Value |
+| --- | --- |
+| Hostname | `cli.example.com` |
+| Service URL | `http://localhost:8765` |
+
+Run the tunnel connector:
+
+```bash
+cloudflared tunnel run <tunnel-name>
+```
+
+Then start Controli:
+
+```bash
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440 --mode full
+```
+
+Send the printed 7-digit code to the guest.
+
 ## Relay Setup
+
+Relay mode is available as a fallback for short sessions. Long relay sessions can exhaust Durable Objects free-tier duration.
 
 Deploy the bundled Cloudflare Worker once:
 
@@ -140,7 +169,13 @@ Controli reads workspaces from `~/.controli/state.json`. Minimal example:
 }
 ```
 
-Start sharing:
+Start a long tunnel session:
+
+```bash
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440 --mode full
+```
+
+Start a relay fallback session:
 
 ```bash
 controli host share --workspace main --minutes 480 --mode full
@@ -175,6 +210,7 @@ controli join 1234567 --console
 Common host commands:
 
 ```bash
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440
 controli host share --workspace main --mode full
 controli host share --workspace main --mode view
 controli host share --workspace main --mode approve
@@ -232,7 +268,8 @@ dist/controli-windows-arm64.exe
 
 - Treat the 7-digit code like a password while it is valid.
 - Use a Cloudflare Worker account you control.
-- The relay sees encrypted WebSocket transport metadata but does not need host inbound ports.
+- Tunnel mode avoids Durable Objects duration for terminal traffic.
+- Relay fallback uses Durable Objects for terminal traffic and should be used for short sessions.
 - The host is prompted before guest control starts unless `--approve=false` is used.
 - Use `--mode view` when the guest should only watch.
 - This is alpha software. Use it on machines you own or are authorized to administer.

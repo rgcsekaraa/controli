@@ -1,16 +1,19 @@
 # Relay
 
-The relay is a Cloudflare Worker with Durable Objects.
+The relay is a Cloudflare Worker. It now uses Workers KV for 7-digit invite lookup.
 
-It handles:
+For tunnel mode it handles:
 
-- WebSocket rendezvous for host and guest.
 - Temporary short-code invite lookup.
+
+For relay fallback it also handles:
+
+- WebSocket rendezvous for host and guest through Durable Objects.
 - Pairing messages by session id.
 - Byte-bounded pending queues during reconnects.
 - Closing both sides when a session is finished.
 
-The host does not open inbound ports. Both host and guest make outbound connections.
+Tunnel mode is recommended for long sessions because terminal traffic does not keep a Durable Object active.
 
 Deploy from a source checkout:
 
@@ -30,4 +33,4 @@ The Worker also exposes:
 /health
 ```
 
-Session queues are capped by message count and byte size so a disconnected peer cannot grow relay memory without limit.
+Session queues are capped by message count and byte size so a disconnected relay fallback peer cannot grow relay memory without limit.

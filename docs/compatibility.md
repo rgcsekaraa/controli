@@ -59,4 +59,5 @@ macOS and Linux hosting use a real PTY. Windows hosting uses a stdio backend unt
 - Very old Linux kernels may not run current Go-built binaries.
 - Host mode requires a working shell.
 - macOS and Linux host mode requires PTY support.
-- Join mode requires outbound HTTPS and WebSocket access to the relay.
+- Tunnel join mode requires outbound HTTPS and WebSocket access to the public tunnel hostname.
+- Relay fallback mode requires outbound HTTPS and WebSocket access to the relay.

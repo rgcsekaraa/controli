@@ -59,7 +59,8 @@ func RenderWebTerminalHTML(token string) string {
     term.open(document.getElementById('terminal'));
     fitAddon.fit();
     term.focus();
-    const socket = new WebSocket('ws://' + location.host + '/ws?token=' + encodeURIComponent(token));
+    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socket = new WebSocket(wsProtocol + '//' + location.host + '/ws?token=' + encodeURIComponent(token));
     socket.binaryType = 'arraybuffer';
     function sendResize() {
       if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'resize', columns: term.cols, rows: term.rows }));

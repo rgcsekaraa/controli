@@ -8,4 +8,6 @@ The guest controls the hosted shell after approval. Use a dedicated workspace an
 
 Audit logs are enabled by default and record session lifecycle, resize events, byte counts, and permission decisions. Typed input is not recorded unless `--audit-input` is set.
 
-Run a relay you control. Rotate invite codes by stopping and starting the host share.
+Run a Worker and Cloudflare Tunnel you control. Rotate invite codes by stopping and starting the host session.
+
+Tunnel mode keeps terminal traffic out of Durable Objects. Relay fallback uses Durable Objects for terminal traffic and should be reserved for short sessions.

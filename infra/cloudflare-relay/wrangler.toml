@@ -2,6 +2,10 @@ name = "controli-relay"
 main = "src/worker.ts"
 compatibility_date = "2026-06-16"
 
+[[kv_namespaces]]
+binding = "INVITES_KV"
+id = "eaab408ea3bc4a7a91da5b3ea0177456"
+
 [[durable_objects.bindings]]
 name = "SESSIONS"
 class_name = "RelaySession"

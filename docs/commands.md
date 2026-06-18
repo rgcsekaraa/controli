@@ -2,13 +2,51 @@
 
 This page lists every current Controli command and flag.
 
-## Host a session
+## Host a tunnel session
+
+```bash
+controli host tunnel --workspace main --public-url https://cli.example.com
+```
+
+Starts the configured workspace shell and serves the browser terminal locally for a named Cloudflare Tunnel. This is the recommended transport for long sessions.
+
+| Flag | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `--workspace <name>` | Yes | | Workspace key from `~/.controli/state.json`. |
+| `--public-url <url>` | Yes | | Public Cloudflare Tunnel hostname. |
+| `--listen <addr>` | No | `127.0.0.1:8765` | Local HTTP service address for `cloudflared`. |
+| `--room <name>` | No | Workspace name | Room label shown to the guest. |
+| `--relay-url <url>` | No | Configured relay or default relay | Worker URL used only for 7-digit invite lookup. |
+| `--name <name>` | No | `guest` | Guest label stored in the invite. |
+| `--minutes <n>` | No | `1440` | Session lifetime in minutes. |
+| `--shell <path>` | No | Workspace shell or default shell | Shell to start for this session. |
+| `--print-only` | No | `false` | Print a code without starting the shell. |
+| `--long-code` | No | `false` | Print the full self-contained code instead of a 7-digit code. |
+| `--mode full` | No | `full` | Guest can type after host approval. |
+| `--mode view` | No | | Guest can watch only. |
+| `--mode approve` | No | | Host approves each input chunk. |
+| `--approve=false` | No | `true` | Skip the first host approval prompt. |
+| `--audit-log <path>` | No | `~/.controli/audit/<session>.jsonl` | Custom audit log path. |
+| `--audit-log off` | No | | Disable audit logging. |
+| `--audit-input` | No | `false` | Store typed input text in audit records. |
+| `--status-interval 30s` | No | disabled | Print session counters while hosting. |
+
+Examples:
+
+```bash
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440
+controli host tunnel --workspace main --public-url https://cli.example.com --mode view
+controli host tunnel --workspace main --public-url https://cli.example.com --listen 127.0.0.1:9000
+controli host tunnel --workspace main --public-url https://cli.example.com --approve=false
+```
+
+## Host a relay fallback session
 
 ```bash
 controli host share --workspace main
 ```
 
-Starts the configured workspace shell, registers a 7-digit invite code, and waits for the guest.
+Starts the configured workspace shell, registers a 7-digit invite code, and sends terminal traffic through the Durable Object relay. Use this for short sessions or fallback testing.
 
 | Flag | Required | Default | Purpose |
 | --- | --- | --- | --- |
@@ -116,10 +154,10 @@ On Windows, the updater downloads a `.new.exe` file because Windows locks the ru
 
 ## Common workflows
 
-Mac host, Windows guest:
+Mac host, Windows guest with tunnel mode:
 
 ```bash
-controli host share --workspace main --minutes 480 --mode full
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440 --mode full
 ```
 
 The Windows guest runs:

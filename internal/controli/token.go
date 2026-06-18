@@ -27,6 +27,8 @@ type RelayToken struct {
 	Name            string `json:"name"`
 	Room            string `json:"room,omitempty"`
 	Mode            string `json:"mode,omitempty"`
+	Transport       string `json:"transport,omitempty"`
+	TunnelURL       string `json:"tunnel_url,omitempty"`
 	RelayURL        string `json:"relay_url"`
 	Secret          string `json:"secret"`
 	ExpiresAt       string `json:"expires_at"`

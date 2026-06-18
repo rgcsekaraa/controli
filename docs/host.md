@@ -6,7 +6,13 @@ The host opens a real PTY and starts the configured shell inside the selected wo
 
 macOS and Linux use a real PTY. Windows hosting uses a stdio backend.
 
-Start a share:
+Start a long tunnel session:
+
+```bash
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440
+```
+
+Start a relay fallback session:
 
 ```bash
 controli host share --workspace main --minutes 480
@@ -36,3 +42,5 @@ Useful host flags:
 | `--room <name>` | Attach a room name to the invite. |
 
 By default audit logs are written under `~/.controli/audit/`.
+
+Tunnel mode requires a named Cloudflare Tunnel route pointing to the local Controli service, usually `http://localhost:8765`.

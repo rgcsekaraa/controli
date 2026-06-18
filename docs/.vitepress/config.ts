@@ -67,6 +67,7 @@ export default defineConfig({
       { text: 'Guide', link: '/overview' },
       { text: 'Install', link: '/install' },
       { text: 'Commands', link: '/commands' },
+      { text: 'Tunnel', link: '/tunnel' },
       { text: 'Security', link: '/security' },
       { text: 'GitHub', link: 'https://github.com/rgcsekaraa/controli' }
     ],
@@ -78,6 +79,7 @@ export default defineConfig({
           { text: 'Overview', link: '/overview' },
           { text: 'Install', link: '/install' },
           { text: 'Commands', link: '/commands' },
+          { text: 'Tunnel Mode', link: '/tunnel' },
           { text: 'Compatibility', link: '/compatibility' },
           { text: 'Configuration', link: '/configuration' },
           { text: 'State', link: '/state' }

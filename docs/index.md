@@ -1,29 +1,30 @@
 # Controli
 
-Controli is a native Go CLI sharing tool for support sessions. A host starts a local shell, receives a 7-digit invite code, and a guest joins through an outbound Cloudflare WebSocket relay.
+Controli is a native Go CLI sharing tool for support sessions. A host starts a local shell, receives a 7-digit invite code, and a guest joins through a browser terminal.
 
 ## Current Scope
 
 | Area | Status |
 | --- | --- |
-| Host support | macOS and Linux with a real PTY |
+| Host support | macOS and Linux with a real PTY, Windows with stdio |
 | Guest support | Windows, macOS, and Linux |
-| Relay | Cloudflare Worker with Durable Objects |
+| Long sessions | Named Cloudflare Tunnel |
+| Short-code lookup | Cloudflare Worker with Workers KV |
+| Relay fallback | Cloudflare Worker with Durable Objects |
 | Guest terminal | Browser terminal using xterm.js |
-| Windows hosting | Planned via ConPTY |
 
 ## Quick Start
 
-Configure the relay URL once:
+Configure the short-code Worker URL once:
 
 ```bash
 controli relay configure --url wss://controli-relay.example.workers.dev
 ```
 
-Start a host session and print an invite code:
+Start a long tunnel session and print an invite code:
 
 ```bash
-controli host share --workspace main --minutes 480
+controli host tunnel --workspace main --public-url https://cli.example.com --minutes 1440
 ```
 
 Join from the guest machine:
@@ -36,6 +37,7 @@ controli join 1234567
 
 - [Install](install.md): download releases and build from source.
 - [Compatibility](compatibility.md): choose the right binary for each OS and CPU.
+- [Tunnel Mode](tunnel.md): run long sessions without Durable Objects duration.
 - [Host](host.md): configure a workspace and start sharing.
 - [Join](join.md): connect from Windows, macOS, or Linux.
 - [Relay](relay.md): deploy and operate the Cloudflare relay.
@@ -46,5 +48,5 @@ controli join 1234567
 
 - The invite code is temporary and should be treated like a password.
 - The guest controls the hosted shell for the lifetime of the session.
-- The relay does not require inbound ports on the host machine.
+- Tunnel mode does not require inbound ports on the host machine.
 - Use a relay deployed in your own Cloudflare account for production use.

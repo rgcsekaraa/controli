@@ -1,5 +1,18 @@
 # Protocol
 
+Controli has two transports:
+
+- Tunnel mode for long sessions.
+- Relay fallback for short sessions and fallback testing.
+
+## Tunnel Mode
+
+The host serves the browser terminal from a local HTTP/WebSocket server. A named Cloudflare Tunnel exposes that local server through a public hostname. The guest receives a 7-digit code, claims a token from Workers KV, and opens the tunnel URL in the browser.
+
+Terminal bytes in tunnel mode do not pass through Durable Objects.
+
+## Relay Fallback
+
 The relay protocol has two sides:
 
 - `host`
@@ -7,7 +20,7 @@ The relay protocol has two sides:
 
 Terminal bytes are sent as WebSocket binary messages. Resize events are encoded as control messages with a reserved prefix.
 
-Short invites store the full relay token in the Worker for a limited time. The guest sends the 7-digit code to claim that token.
+Short invites store the full token in Workers KV for a limited time. The guest sends the 7-digit code to claim that token.
 
 Invite metadata can include a room name and permission mode. The host enforces permissions locally.
 

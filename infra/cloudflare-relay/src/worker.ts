@@ -1,6 +1,7 @@
 export interface Env {
   SESSIONS: DurableObjectNamespace;
   INVITES: DurableObjectNamespace;
+  INVITES_KV: KVNamespace;
 }
 
 type Side = "host" | "client";
@@ -13,6 +14,8 @@ interface InvitePayload {
   name: string;
   room?: string;
   mode?: string;
+  transport?: string;
+  tunnel_url?: string;
   relay_url: string;
   secret: string;
   expires_at: string;
@@ -60,6 +63,8 @@ function buildInvite(payload: Record<string, unknown> | null): InvitePayload | n
   const name = textField(payload, "name") ?? "guest";
   const room = textField(payload, "room") ?? undefined;
   const mode = textField(payload, "mode") ?? undefined;
+  const transport = textField(payload, "transport") ?? undefined;
+  const tunnelUrl = textField(payload, "tunnel_url") ?? undefined;
   const relayUrl = textField(payload, "relay_url");
   const secret = textField(payload, "secret");
   const expiresAt = textField(payload, "expires_at");
@@ -75,6 +80,8 @@ function buildInvite(payload: Record<string, unknown> | null): InvitePayload | n
     name,
     room,
     mode,
+    transport,
+    tunnel_url: tunnelUrl,
     relay_url: relayUrl,
     secret,
     expires_at: expiresAt,
@@ -87,6 +94,15 @@ function isExpired(value: string): boolean {
   return Number.isNaN(time) || time < Date.now();
 }
 
+function inviteKey(code: string): string {
+  return `invite:${code}`;
+}
+
+function inviteTTL(value: string): number {
+  const seconds = Math.floor((Date.parse(value) - Date.now()) / 1000);
+  return Math.max(0, seconds);
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -96,6 +112,7 @@ export default {
         ok: true,
         service: "controli-relay",
         websocket_path: "/v1/ws",
+        invite_store: "kv",
         max_pending_messages: MAX_PENDING_MESSAGES,
         max_pending_bytes: MAX_PENDING_BYTES,
       });
@@ -107,14 +124,20 @@ export default {
       if (!code) {
         return jsonResponse(400, { error: "valid 7-digit code is required" });
       }
-      const object = env.INVITES.get(env.INVITES.idFromName(code));
-      return object.fetch(
-        new Request(request.url, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ ...payload, code }),
-        }),
-      );
+      const invite = buildInvite({ ...payload, code });
+      if (!invite) {
+        return jsonResponse(400, { error: "invalid invite payload" });
+      }
+      const existing = await env.INVITES_KV.get<InvitePayload>(inviteKey(code), "json");
+      if (existing && !isExpired(existing.invite_expires_at)) {
+        return jsonResponse(409, { error: "short code collision; try again" });
+      }
+      const ttl = inviteTTL(invite.invite_expires_at);
+      if (ttl <= 0) {
+        return jsonResponse(400, { error: "invite is already expired" });
+      }
+      await env.INVITES_KV.put(inviteKey(code), JSON.stringify(invite), { expirationTtl: ttl });
+      return jsonResponse(200, { ok: true });
     }
 
     if (url.pathname === "/v1/invite/claim" && request.method === "POST") {
@@ -123,14 +146,15 @@ export default {
       if (!code) {
         return jsonResponse(400, { error: "valid 7-digit code is required" });
       }
-      const object = env.INVITES.get(env.INVITES.idFromName(code));
-      return object.fetch(
-        new Request(request.url, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ code }),
-        }),
-      );
+      const invite = await env.INVITES_KV.get<InvitePayload>(inviteKey(code), "json");
+      if (!invite) {
+        return jsonResponse(404, { error: "unknown short code" });
+      }
+      if (isExpired(invite.invite_expires_at)) {
+        await env.INVITES_KV.delete(inviteKey(code));
+        return jsonResponse(410, { error: "short code expired" });
+      }
+      return jsonResponse(200, invite);
     }
 
     if (url.pathname === "/v1/close" && request.method === "POST") {
