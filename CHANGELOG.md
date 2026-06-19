@@ -4,6 +4,17 @@ All notable changes to Controli will be documented in this file.
 
 ## Unreleased
 
+## 0.4.7
+
+- Required generated join passwords for short-code invite claims.
+- Added `controli join --password` and accepted join flags before or after the invite code.
+- Updated the hosted browser join page to require the join password.
+- Removed join password hashes from successful short-code claim responses.
+- Warned hosts that relay fallback uses Durable Objects duration for live terminal traffic.
+- Fixed short invite KV expiry handling for near-60-second invites.
+
+## 0.4.6
+
 - Added a Worker-hosted browser join page at `/join` for no-install tunnel guests.
 - Added persistent macOS and Linux host shells through `tmux` when available.
 - Added `--persist`, `--persist-name`, and `--minutes 0` for no fixed Controli session expiry.

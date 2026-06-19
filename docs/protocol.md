@@ -7,11 +7,11 @@ Controli has two transports:
 
 ## Tunnel Mode
 
-The host serves the browser terminal from a local HTTP/WebSocket server. A named Cloudflare Tunnel exposes that local server through a public hostname. The guest receives a 7-digit code, claims a token from Workers KV, and opens the tunnel URL in the browser.
+The host serves the browser terminal from a local HTTP/WebSocket server. A named Cloudflare Tunnel exposes that local server through a public hostname. The guest receives a 7-digit code and join password, claims a token from Workers KV, and opens the tunnel URL in the browser.
 
 Terminal bytes in tunnel mode do not pass through Durable Objects.
 
-One active guest WebSocket is allowed per host session. A guest can reconnect with the same 7-digit code while the invite is still valid. Reconnects from the same browser keep the existing host approval, while a different guest requires fresh approval before input is accepted.
+One active guest WebSocket is allowed per host session. A guest can reconnect with the same 7-digit code and join password while the invite is still valid. Reconnects from the same browser keep the existing host approval, while a different guest requires fresh approval before input is accepted.
 
 ## Relay Fallback
 
@@ -24,7 +24,7 @@ Terminal bytes are sent as WebSocket binary messages. Resize events and guest co
 
 Relay fallback allows one active client socket per session. Additional clients are rejected while a guest is connected. When the same guest reconnects after a transient disconnect, the relay replaces the stale socket and keeps the existing host approval. A different guest still requires fresh approval before input reaches the shell.
 
-Short invites store the full token in Workers KV for a limited time. The guest sends the 7-digit code to claim that token.
+Short invites store the full token and a join password hash in Workers KV for a limited time. The guest must send both the 7-digit code and join password to claim that token.
 
 Invite metadata can include a room name and permission mode. The host enforces permissions locally.
 

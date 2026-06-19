@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
@@ -151,6 +152,7 @@ func cmdHost(args []string) int {
 	shell := flags.String("shell", "", "shell path")
 	printOnly := flags.Bool("print-only", false, "print code without starting shell")
 	longCode := flags.Bool("long-code", false, "print full self-contained code")
+	joinPassword := flags.String("password", "", "join password for short-code invites; generated when omitted")
 	modeValue := flags.String("mode", "full", "permission mode: full, view, approve")
 	approve := flags.Bool("approve", true, "ask host before guest control starts")
 	auditLog := flags.String("audit-log", "", "audit log path, or off")
@@ -216,13 +218,25 @@ func cmdHost(args []string) int {
 		}
 		fmt.Println(encoded)
 	} else {
+		password := strings.TrimSpace(*joinPassword)
+		if password == "" {
+			password, err = controli.NewJoinPassword()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "error:", err)
+				return 1
+			}
+		}
+		token.PasswordHash = controli.HashJoinPassword(password)
 		code, err := registerShortInvite(activeRelayURL, token, *minutes)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "error:", err)
 			return 1
 		}
-		fmt.Println("Send this 7-digit code to the guest (treat it like a password):")
+		fmt.Println("Send this code and join password to the guest through separate channels:")
+		fmt.Println("code:")
 		fmt.Println(code)
+		fmt.Println("join_password:")
+		fmt.Println(password)
 		fmt.Println()
 		fmt.Println("expires_at:", printableExpiry(expiresAt))
 		fmt.Println("If short-code lookup fails, print a full code with: controli host share --workspace <name> --long-code")
@@ -240,6 +254,7 @@ func cmdHost(args []string) int {
 		activeAuditLog = ""
 	}
 	fmt.Println("relay session is ready; send the code to the guest and keep this process running")
+	fmt.Fprintln(os.Stderr, "warning: relay mode uses Cloudflare Durable Objects for live terminal traffic; use host tunnel for long sessions to avoid free-tier duration limits")
 	fmt.Println("room:", firstNonEmpty(*room, *workspaceName))
 	fmt.Println("permission_mode:", mode)
 	fmt.Println("persistent_shell:", *persist)
@@ -276,6 +291,7 @@ func cmdHostTunnel(args []string) int {
 	shell := flags.String("shell", "", "shell path")
 	printOnly := flags.Bool("print-only", false, "print code without starting shell")
 	longCode := flags.Bool("long-code", false, "print full self-contained code")
+	joinPassword := flags.String("password", "", "join password for short-code invites; generated when omitted")
 	modeValue := flags.String("mode", "full", "permission mode: full, view, approve")
 	approve := flags.Bool("approve", true, "ask host before guest control starts")
 	auditLog := flags.String("audit-log", "", "audit log path, or off")
@@ -342,13 +358,25 @@ func cmdHostTunnel(args []string) int {
 		}
 		fmt.Println(encoded)
 	} else {
+		password := strings.TrimSpace(*joinPassword)
+		if password == "" {
+			password, err = controli.NewJoinPassword()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "error:", err)
+				return 1
+			}
+		}
+		token.PasswordHash = controli.HashJoinPassword(password)
 		code, err := registerShortInvite(activeRelayURL, token, *minutes)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "error:", err)
 			return 1
 		}
-		fmt.Println("Send this 7-digit code to the guest (treat it like a password):")
+		fmt.Println("Send this code and join password to the guest through separate channels:")
+		fmt.Println("code:")
 		fmt.Println(code)
+		fmt.Println("join_password:")
+		fmt.Println(password)
 		fmt.Println()
 		fmt.Println("expires_at:", printableExpiry(expiresAt))
 		fmt.Println("transport:", controli.TransportTunnel)
@@ -453,9 +481,10 @@ func browserJoinURL(relayURL string) string {
 func cmdJoin(args []string) int {
 	flags := flag.NewFlagSet("join", flag.ContinueOnError)
 	relayURL := flags.String("relay-url", "", "relay URL for short code")
+	joinPassword := flags.String("password", "", "join password for short code")
 	webTerminal := flags.Bool("web-terminal", false, "open the local browser terminal")
 	console := flags.Bool("console", false, "force direct console rendering")
-	if err := flags.Parse(args); err != nil {
+	if err := flags.Parse(normalizeJoinArgs(args)); err != nil {
 		return 2
 	}
 	code := ""
@@ -465,7 +494,7 @@ func cmdJoin(args []string) int {
 		fmt.Print("paste client code: ")
 		_, _ = fmt.Scanln(&code)
 	}
-	token, err := resolveJoinToken(code, firstNonEmpty(*relayURL, controli.DefaultRelayURL))
+	token, err := resolveJoinToken(code, firstNonEmpty(*relayURL, controli.DefaultRelayURL), *joinPassword)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return 1
@@ -493,7 +522,49 @@ func cmdJoin(args []string) int {
 	return controli.RunConsoleRelayClient(token.RelayURL, token.SessionID, token.Secret)
 }
 
-func resolveJoinToken(value, relayURL string) (controli.RelayToken, error) {
+func normalizeJoinArgs(args []string) []string {
+	var flags []string
+	var positional []string
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch {
+		case arg == "--password" || arg == "-password" || arg == "password":
+			if i+1 < len(args) {
+				flags = append(flags, "--password", args[i+1])
+				i++
+				continue
+			}
+		case strings.HasPrefix(arg, "--password="):
+			flags = append(flags, arg)
+			continue
+		case strings.HasPrefix(arg, "-password="):
+			flags = append(flags, "--"+strings.TrimPrefix(arg, "-"))
+			continue
+		case arg == "--relay-url" || arg == "-relay-url":
+			if i+1 < len(args) {
+				flags = append(flags, "--relay-url", args[i+1])
+				i++
+				continue
+			}
+		case strings.HasPrefix(arg, "--relay-url="):
+			flags = append(flags, arg)
+			continue
+		case strings.HasPrefix(arg, "-relay-url="):
+			flags = append(flags, "--"+strings.TrimPrefix(arg, "-"))
+			continue
+		case arg == "--web-terminal" || arg == "-web-terminal":
+			flags = append(flags, "--web-terminal")
+			continue
+		case arg == "--console" || arg == "-console":
+			flags = append(flags, "--console")
+			continue
+		}
+		positional = append(positional, arg)
+	}
+	return append(flags, positional...)
+}
+
+func resolveJoinToken(value, relayURL, password string) (controli.RelayToken, error) {
 	if strings.Contains(value, controli.SessionPrefix) {
 		return controli.DecodeRelayToken(value)
 	}
@@ -501,8 +572,18 @@ func resolveJoinToken(value, relayURL string) (controli.RelayToken, error) {
 	if len(code) != controli.ShortCodeLength {
 		return controli.RelayToken{}, fmt.Errorf("short code must be %d digits", controli.ShortCodeLength)
 	}
+	if strings.TrimSpace(password) == "" {
+		password = promptLine("join password: ")
+	}
 	client := controli.NewRelayClient(relayURL, "invite", "invite")
-	return client.ClaimInvite(code)
+	return client.ClaimInviteWithPassword(code, password)
+}
+
+func promptLine(prompt string) string {
+	fmt.Fprint(os.Stderr, prompt)
+	reader := bufio.NewReader(os.Stdin)
+	value, _ := reader.ReadString('\n')
+	return strings.TrimSpace(value)
 }
 
 func firstNonEmpty(values ...string) string {

@@ -92,8 +92,16 @@ func (c *RelayClient) RegisterInvite(invite RelayToken) error {
 }
 
 func (c *RelayClient) ClaimInvite(code string) (RelayToken, error) {
+	return c.ClaimInviteWithPassword(code, "")
+}
+
+func (c *RelayClient) ClaimInviteWithPassword(code, password string) (RelayToken, error) {
 	var token RelayToken
-	err := c.post("/v1/invite/claim", map[string]string{"code": code}, &token)
+	payload := map[string]string{"code": code}
+	if strings.TrimSpace(password) != "" {
+		payload["password"] = password
+	}
+	err := c.post("/v1/invite/claim", payload, &token)
 	return token, err
 }
 

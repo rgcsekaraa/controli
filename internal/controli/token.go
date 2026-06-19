@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"compress/zlib"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -14,10 +16,11 @@ import (
 )
 
 const (
-	RelayTokenKind  = "controli-relay-token"
-	SessionPrefix   = "ct1_"
-	ShortCodeLength = 7
-	NoExpiryValue   = "never"
+	RelayTokenKind    = "controli-relay-token"
+	SessionPrefix     = "ct1_"
+	ShortCodeLength   = 7
+	JoinPasswordBytes = 9
+	NoExpiryValue     = "never"
 )
 
 type RelayToken struct {
@@ -32,6 +35,7 @@ type RelayToken struct {
 	TunnelURL       string `json:"tunnel_url,omitempty"`
 	RelayURL        string `json:"relay_url"`
 	Secret          string `json:"secret"`
+	PasswordHash    string `json:"password_hash,omitempty"`
 	ExpiresAt       string `json:"expires_at"`
 	InviteExpiresAt string `json:"invite_expires_at,omitempty"`
 }
@@ -55,6 +59,23 @@ func NewShortCode() (string, error) {
 	}
 	code := value % 10000000
 	return leftPadInt(code, ShortCodeLength), nil
+}
+
+func NewJoinPassword() (string, error) {
+	token, err := NewRandomURLToken(JoinPasswordBytes)
+	if err != nil {
+		return "", err
+	}
+	if len(token) <= 4 {
+		return token, nil
+	}
+	return token[:4] + "-" + token[4:8] + "-" + token[8:], nil
+}
+
+func HashJoinPassword(value string) string {
+	normalized := strings.TrimSpace(value)
+	digest := sha256.Sum256([]byte(normalized))
+	return hex.EncodeToString(digest[:])
 }
 
 func leftPadInt(value, width int) string {

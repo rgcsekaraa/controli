@@ -14,7 +14,7 @@ The current implementation is a native Go binary.
 
 ## Install
 
-Download the binary that matches the guest or host machine. Current release: [v0.4.6](https://github.com/rgcsekaraa/controli/releases/tag/v0.4.6).
+Download the binary that matches the guest or host machine. Current release: [v0.4.7](https://github.com/rgcsekaraa/controli/releases/tag/v0.4.7).
 
 Release page:
 
@@ -38,10 +38,10 @@ https://rgcsekaraa.github.io/controli/commands
 
 | Machine | Download |
 | --- | --- |
-| Most Intel or AMD PCs | [controli-windows-amd64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-windows-amd64.exe) |
-| Older 32-bit PCs | [controli-windows-386.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-windows-386.exe) |
-| Windows on ARM64 | [controli-windows-arm64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-windows-arm64.exe) |
-| Older Windows ARM devices | [controli-windows-arm.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-windows-arm.exe) |
+| Most Intel or AMD PCs | [controli-windows-amd64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-windows-amd64.exe) |
+| Older 32-bit PCs | [controli-windows-386.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-windows-386.exe) |
+| Windows on ARM64 | [controli-windows-arm64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-windows-arm64.exe) |
+| Older Windows ARM devices | [controli-windows-arm.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-windows-arm.exe) |
 
 Quick download:
 
@@ -56,8 +56,8 @@ Windows release binaries are currently unsigned. If Device Guard or App Control 
 
 | Machine | Download |
 | --- | --- |
-| Apple Silicon | [controli-darwin-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-darwin-arm64) |
-| Intel Mac | [controli-darwin-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-darwin-amd64) |
+| Apple Silicon | [controli-darwin-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-darwin-arm64) |
+| Intel Mac | [controli-darwin-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-darwin-amd64) |
 
 Quick download for Apple Silicon:
 
@@ -71,14 +71,14 @@ chmod +x controli
 
 | Machine | Download |
 | --- | --- |
-| Most Intel or AMD desktops and servers | [controli-linux-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-linux-amd64) |
-| Older 32-bit Intel or AMD systems | [controli-linux-386](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-linux-386) |
-| ARM64 servers and boards | [controli-linux-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-linux-arm64) |
-| ARMv7 boards | [controli-linux-armv7](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-linux-armv7) |
-| ARMv6 boards | [controli-linux-armv6](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-linux-armv6) |
-| PowerPC 64 little-endian servers | [controli-linux-ppc64le](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-linux-ppc64le) |
-| RISC-V 64 systems | [controli-linux-riscv64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-linux-riscv64) |
-| IBM Z or LinuxONE | [controli-linux-s390x](https://github.com/rgcsekaraa/controli/releases/download/v0.4.6/controli-linux-s390x) |
+| Most Intel or AMD desktops and servers | [controli-linux-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-linux-amd64) |
+| Older 32-bit Intel or AMD systems | [controli-linux-386](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-linux-386) |
+| ARM64 servers and boards | [controli-linux-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-linux-arm64) |
+| ARMv7 boards | [controli-linux-armv7](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-linux-armv7) |
+| ARMv6 boards | [controli-linux-armv6](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-linux-armv6) |
+| PowerPC 64 little-endian servers | [controli-linux-ppc64le](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-linux-ppc64le) |
+| RISC-V 64 systems | [controli-linux-riscv64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-linux-riscv64) |
+| IBM Z or LinuxONE | [controli-linux-s390x](https://github.com/rgcsekaraa/controli/releases/download/v0.4.7/controli-linux-s390x) |
 
 Quick download for most PCs and servers:
 
@@ -219,12 +219,13 @@ Browser join for tunnel sessions:
 https://controli-relay.rgcsekaraa.workers.dev/join
 ```
 
-The guest enters the 7-digit code from the host.
+The guest enters the 7-digit code and join password from the host.
 
 CLI join is still available:
 
 ```bash
 controli join 1234567
+controli join 1234567 --password abcd-1234-wxyz
 ```
 
 By default, joining opens a local browser terminal powered by embedded xterm.js. This avoids Windows console rendering freezes and gives the same terminal renderer on Windows, macOS, and Linux.
@@ -254,6 +255,7 @@ Common guest commands:
 
 ```bash
 controli join 1234567
+controli join 1234567 --password abcd-1234-wxyz
 controli join 1234567 --console
 controli join 1234567 --web-terminal
 ```
@@ -297,10 +299,11 @@ dist/controli-windows-arm64.exe
 
 ## Security Notes
 
-- Treat the 7-digit code like a password while it is valid.
+- Short-code joins require both the 7-digit code and the generated join password.
+- Send the code and join password through separate channels when possible.
 - Use a Cloudflare Worker account you control.
 - Tunnel mode avoids Durable Objects duration for terminal traffic.
-- Relay fallback uses Durable Objects for terminal traffic and should be used for short sessions.
+- Relay fallback uses Durable Objects for terminal traffic and should be used only for short sessions.
 - The host is prompted before guest control starts unless `--approve=false` is used.
 - Use `--mode view` when the guest should only watch.
 - This is alpha software. Use it on machines you own or are authorized to administer.

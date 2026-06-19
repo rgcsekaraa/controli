@@ -24,6 +24,7 @@ Starts the configured workspace shell and serves the browser terminal locally fo
 | `--persist-name <name>` | No | `controli-<workspace>` | Stable `tmux` session name for reattaching. |
 | `--print-only` | No | `false` | Print a code without starting the shell. |
 | `--long-code` | No | `false` | Print the full self-contained code instead of a 7-digit code. |
+| `--password <value>` | No | generated | Join password required with the 7-digit code. |
 | `--mode full` | No | `full` | Guest can type after host approval. |
 | `--mode view` | No | | Guest can watch only. |
 | `--mode approve` | No | | Host approves each input chunk. |
@@ -49,7 +50,7 @@ controli host tunnel --workspace main --public-url https://cli.example.com --app
 controli host share --workspace main
 ```
 
-Starts the configured workspace shell, registers a 7-digit invite code, and sends terminal traffic through the Durable Object relay. Use this for short sessions or fallback testing.
+Starts the configured workspace shell, registers a 7-digit invite code plus a join password, and sends terminal traffic through the Durable Object relay. Use this for short sessions or fallback testing; long relay sessions can exhaust Cloudflare's free Durable Objects duration.
 
 | Flag | Required | Default | Purpose |
 | --- | --- | --- | --- |
@@ -63,6 +64,7 @@ Starts the configured workspace shell, registers a 7-digit invite code, and send
 | `--persist-name <name>` | No | `controli-<workspace>` | Stable `tmux` session name for reattaching. |
 | `--print-only` | No | `false` | Print a code without starting the shell. |
 | `--long-code` | No | `false` | Print the full self-contained code instead of a 7-digit code. |
+| `--password <value>` | No | generated | Join password required with the 7-digit code. |
 | `--mode full` | No | `full` | Guest can type after host approval. |
 | `--mode view` | No | | Guest can watch only. |
 | `--mode approve` | No | | Host approves each input chunk. |
@@ -92,7 +94,7 @@ Browser join for tunnel sessions:
 https://controli-relay.rgcsekaraa.workers.dev/join
 ```
 
-The guest enters the 7-digit code from the host and the browser opens the terminal.
+The guest enters the 7-digit code and join password from the host and the browser opens the terminal.
 
 CLI join:
 
@@ -107,6 +109,7 @@ Only one guest can be connected to a live session at a time. The same 7-digit co
 | Flag | Default | Purpose |
 | --- | --- | --- |
 | `--relay-url <url>` | Default relay | Relay to use when resolving a 7-digit code. |
+| `--password <value>` | prompt | Join password required with the 7-digit code. |
 | `--web-terminal` | automatic | Force the local browser terminal. |
 | `--console` | `false` | Render directly in the current console for debugging. |
 
@@ -114,6 +117,7 @@ Examples:
 
 ```bash
 controli join 1234567
+controli join 1234567 --password abcd-1234-wxyz
 controli join 1234567 --console
 controli join 1234567 --web-terminal
 controli join 1234567 --relay-url wss://controli-relay.example.workers.dev

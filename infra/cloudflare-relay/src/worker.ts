@@ -18,6 +18,7 @@ interface InvitePayload {
   tunnel_url?: string;
   relay_url: string;
   secret: string;
+  password_hash?: string;
   expires_at: string;
   invite_expires_at: string;
 }
@@ -82,6 +83,7 @@ function buildInvite(payload: Record<string, unknown> | null): InvitePayload | n
   const tunnelUrl = textField(payload, "tunnel_url") ?? undefined;
   const relayUrl = textField(payload, "relay_url");
   const secret = textField(payload, "secret");
+  const passwordHash = textField(payload, "password_hash") ?? undefined;
   const expiresAt = textField(payload, "expires_at");
   const inviteExpiresAt = textField(payload, "invite_expires_at");
   if (!code || !sessionId || !relayUrl || !secret || !expiresAt || !inviteExpiresAt) {
@@ -99,6 +101,7 @@ function buildInvite(payload: Record<string, unknown> | null): InvitePayload | n
     tunnel_url: tunnelUrl,
     relay_url: relayUrl,
     secret,
+    password_hash: passwordHash,
     expires_at: expiresAt,
     invite_expires_at: inviteExpiresAt,
   };
@@ -121,13 +124,35 @@ function inviteTTL(value: string): number | null {
     return null;
   }
   const seconds = Math.floor((Date.parse(value) - Date.now()) / 1000);
-  return Math.max(0, seconds);
+  if (seconds <= 0) {
+    return 0;
+  }
+  return Math.max(60, seconds);
 }
 
 function joinTunnelURL(publicURL: string, secret: string): string {
   const parsed = new URL(publicURL);
   parsed.searchParams.set("token", secret);
   return parsed.toString();
+}
+
+async function verifyInvitePassword(invite: InvitePayload, password: string | null): Promise<Response | null> {
+  if (!invite.password_hash) {
+    return null;
+  }
+  if (!password || !password.trim()) {
+    return jsonResponse(401, { error: "join password is required" });
+  }
+  const digest = await sha256(password.trim());
+  if (!timingSafeEqual(invite.password_hash, digest)) {
+    return jsonResponse(403, { error: "invalid join password" });
+  }
+  return null;
+}
+
+function claimPayload(invite: InvitePayload): Omit<InvitePayload, "password_hash"> {
+  const { password_hash: _passwordHash, ...payload } = invite;
+  return payload;
 }
 
 function renderJoinPage(): string {
@@ -231,10 +256,12 @@ function renderJoinPage(): string {
 <body>
   <main>
     <h1>Join Controli</h1>
-    <p>Enter the 7-digit code from the host.</p>
+    <p>Enter the code and join password from the host.</p>
     <form id="join-form" autocomplete="off">
       <label for="code">Code</label>
       <input id="code" name="code" inputmode="numeric" pattern="[0-9 ]*" maxlength="16" placeholder="1234567" autofocus>
+      <label for="password">Join password</label>
+      <input id="password" name="password" type="password" autocomplete="one-time-code" spellcheck="false">
       <button id="join-button" type="submit">Join session</button>
       <div id="status" role="status" aria-live="polite"></div>
     </form>
@@ -242,6 +269,7 @@ function renderJoinPage(): string {
   <script>
     const form = document.getElementById('join-form');
     const codeInput = document.getElementById('code');
+    const passwordInput = document.getElementById('password');
     const button = document.getElementById('join-button');
     const status = document.getElementById('status');
     const params = new URLSearchParams(location.search);
@@ -259,13 +287,19 @@ function renderJoinPage(): string {
         codeInput.focus();
         return;
       }
+      const password = passwordInput.value.trim();
+      if (!password) {
+        setStatus('Enter the join password.', true);
+        passwordInput.focus();
+        return;
+      }
       button.disabled = true;
       setStatus('Connecting...');
       try {
         const response = await fetch('/v1/browser/claim', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ code })
+          body: JSON.stringify({ code, password })
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
@@ -341,7 +375,12 @@ export default {
         await env.INVITES_KV.delete(inviteKey(code));
         return jsonResponse(410, { error: "short code expired" });
       }
-      return jsonResponse(200, invite);
+      const password = typeof payload?.password === "string" ? payload.password : null;
+      const passwordError = await verifyInvitePassword(invite, password);
+      if (passwordError) {
+        return passwordError;
+      }
+      return jsonResponse(200, claimPayload(invite));
     }
 
     if (url.pathname === "/v1/browser/claim" && request.method === "POST") {
@@ -357,6 +396,11 @@ export default {
       if (isExpired(invite.invite_expires_at)) {
         await env.INVITES_KV.delete(inviteKey(code));
         return jsonResponse(410, { error: "short code expired" });
+      }
+      const password = typeof payload?.password === "string" ? payload.password : null;
+      const passwordError = await verifyInvitePassword(invite, password);
+      if (passwordError) {
+        return passwordError;
       }
       if (invite.transport !== "tunnel" || !invite.tunnel_url) {
         return jsonResponse(409, { error: "browser join requires tunnel mode for this release" });
@@ -467,7 +511,12 @@ export class InviteCode implements DurableObject {
         await this.state.storage.delete("invite");
         return jsonResponse(410, { error: "short code expired" });
       }
-      return jsonResponse(200, invite);
+      const password = typeof payload?.password === "string" ? payload.password : null;
+      const passwordError = await verifyInvitePassword(invite, password);
+      if (passwordError) {
+        return passwordError;
+      }
+      return jsonResponse(200, claimPayload(invite));
     }
 
     return jsonResponse(404, { error: "not found" });

@@ -26,6 +26,8 @@ Start a relay fallback session:
 controli host share --workspace main --minutes 480
 ```
 
+Relay fallback sessions use Durable Objects for live terminal traffic. Keep them short, or use tunnel mode for long sessions to avoid Cloudflare free-tier duration limits.
+
 Permission modes:
 
 ```bash
@@ -48,6 +50,7 @@ Useful host flags:
 | `--audit-input` | Include typed input text in audit records. |
 | `--status-interval 30s` | Print byte counters and last activity while hosting. |
 | `--room <name>` | Attach a room name to the invite. |
+| `--password <value>` | Set the join password printed with the 7-digit invite code. |
 | `--persist=false` | Disable the persistent `tmux` backend on macOS and Linux. |
 | `--persist-name <name>` | Choose the stable `tmux` session name used for reattach. |
 

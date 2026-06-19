@@ -1,6 +1,6 @@
 # Security
 
-Treat every invite code like a password while it is valid.
+Short-code joins require both the 7-digit code and the generated join password. Send them through separate channels when possible.
 
 The host is prompted before the guest can control the shell. Use `--mode view` when the guest should only watch, and use `--mode approve` when every input chunk should be approved by the host.
 
@@ -10,6 +10,6 @@ Only one active guest is allowed per invite code. The same guest can reconnect a
 
 Audit logs are enabled by default and record session lifecycle, resize events, byte counts, and permission decisions. Typed input is not recorded unless `--audit-input` is set.
 
-Run a Worker and Cloudflare Tunnel you control. Rotate invite codes by stopping and starting the host session.
+Run a Worker and Cloudflare Tunnel you control. Rotate invite codes and join passwords by stopping and starting the host session.
 
-Tunnel mode keeps terminal traffic out of Durable Objects. Relay fallback uses Durable Objects for terminal traffic and should be reserved for short sessions.
+Tunnel mode keeps terminal traffic out of Durable Objects. Relay fallback uses Durable Objects for terminal traffic and should be reserved for short sessions because active relay WebSockets consume Durable Objects duration.
