@@ -160,6 +160,8 @@ func cmdHost(args []string) int {
 	statusInterval := flags.Duration("status-interval", 0, "print host session status on an interval, for example 30s")
 	persist := flags.Bool("persist", true, "keep the shell in a persistent host session when supported")
 	persistName := flags.String("persist-name", "", "stable persistent shell name")
+	downloads := flags.Bool("downloads", false, "allow guest downloads from the workspace controli-drive folder")
+	downloadApprove := flags.Bool("download-approve", true, "ask host before each download")
 	if err := flags.Parse(args[1:]); err != nil {
 		return 2
 	}
@@ -253,29 +255,43 @@ func cmdHost(args []string) int {
 	if strings.EqualFold(activeAuditLog, "off") || strings.EqualFold(activeAuditLog, "none") {
 		activeAuditLog = ""
 	}
+	downloadDir := controli.DefaultDownloadDir(path)
+	if *downloads {
+		if err := os.MkdirAll(downloadDir, 0o700); err != nil {
+			fmt.Fprintln(os.Stderr, "error:", err)
+			return 1
+		}
+	}
 	fmt.Println("relay session is ready; send the code to the guest and keep this process running")
 	fmt.Fprintln(os.Stderr, "warning: relay mode uses Cloudflare Durable Objects for live terminal traffic; use host tunnel for long sessions to avoid free-tier duration limits")
 	fmt.Println("room:", firstNonEmpty(*room, *workspaceName))
 	fmt.Println("permission_mode:", mode)
 	fmt.Println("persistent_shell:", *persist)
+	if *downloads {
+		fmt.Println("download_dir:", downloadDir)
+	}
 	if activeAuditLog != "" {
 		fmt.Println("audit_log:", activeAuditLog)
 	}
 	return controli.RunHostRelayShellWithOptions(controli.HostOptions{
-		RelayURL:       activeRelayURL,
-		SessionID:      sessionID,
-		Secret:         secret,
-		Cwd:            path,
-		Shell:          activeShell,
-		WorkspaceName:  *workspaceName,
-		GuestName:      *name,
-		Mode:           mode,
-		RequireApprove: *approve,
-		AuditLogPath:   activeAuditLog,
-		AuditInput:     *auditInput,
-		StatusInterval: *statusInterval,
-		Persist:        *persist,
-		PersistName:    *persistName,
+		RelayURL:        activeRelayURL,
+		SessionID:       sessionID,
+		Secret:          secret,
+		Cwd:             path,
+		Shell:           activeShell,
+		WorkspaceName:   *workspaceName,
+		GuestName:       *name,
+		Mode:            mode,
+		RequireApprove:  *approve,
+		AuditLogPath:    activeAuditLog,
+		AuditInput:      *auditInput,
+		StatusInterval:  *statusInterval,
+		Persist:         *persist,
+		PersistName:     *persistName,
+		Downloads:       *downloads,
+		DownloadDir:     downloadDir,
+		DownloadMax:     controli.DefaultDownloadMax,
+		DownloadApprove: *downloadApprove,
 	})
 }
 
@@ -299,6 +315,8 @@ func cmdHostTunnel(args []string) int {
 	statusInterval := flags.Duration("status-interval", 0, "print host session status on an interval, for example 30s")
 	persist := flags.Bool("persist", true, "keep the shell in a persistent host session when supported")
 	persistName := flags.String("persist-name", "", "stable persistent shell name")
+	downloads := flags.Bool("downloads", false, "allow guest downloads from the workspace controli-drive folder")
+	downloadApprove := flags.Bool("download-approve", true, "ask host before each download")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -394,30 +412,44 @@ func cmdHostTunnel(args []string) int {
 	if strings.EqualFold(activeAuditLog, "off") || strings.EqualFold(activeAuditLog, "none") {
 		activeAuditLog = ""
 	}
+	downloadDir := controli.DefaultDownloadDir(path)
+	if *downloads {
+		if err := os.MkdirAll(downloadDir, 0o700); err != nil {
+			fmt.Fprintln(os.Stderr, "error:", err)
+			return 1
+		}
+	}
 	fmt.Println("tunnel session is ready; keep cloudflared and this process running")
 	fmt.Println("room:", firstNonEmpty(*room, *workspaceName))
 	fmt.Println("permission_mode:", mode)
 	fmt.Println("persistent_shell:", *persist)
 	fmt.Println("listen:", *listenAddr)
+	if *downloads {
+		fmt.Println("download_dir:", downloadDir)
+	}
 	if activeAuditLog != "" {
 		fmt.Println("audit_log:", activeAuditLog)
 	}
 	return controli.RunHostTunnelShellWithOptions(controli.TunnelHostOptions{
 		HostOptions: controli.HostOptions{
-			RelayURL:       activeRelayURL,
-			SessionID:      sessionID,
-			Secret:         secret,
-			Cwd:            path,
-			Shell:          activeShell,
-			WorkspaceName:  *workspaceName,
-			GuestName:      *name,
-			Mode:           mode,
-			RequireApprove: *approve,
-			AuditLogPath:   activeAuditLog,
-			AuditInput:     *auditInput,
-			StatusInterval: *statusInterval,
-			Persist:        *persist,
-			PersistName:    *persistName,
+			RelayURL:        activeRelayURL,
+			SessionID:       sessionID,
+			Secret:          secret,
+			Cwd:             path,
+			Shell:           activeShell,
+			WorkspaceName:   *workspaceName,
+			GuestName:       *name,
+			Mode:            mode,
+			RequireApprove:  *approve,
+			AuditLogPath:    activeAuditLog,
+			AuditInput:      *auditInput,
+			StatusInterval:  *statusInterval,
+			Persist:         *persist,
+			PersistName:     *persistName,
+			Downloads:       *downloads,
+			DownloadDir:     downloadDir,
+			DownloadMax:     controli.DefaultDownloadMax,
+			DownloadApprove: *downloadApprove,
 		},
 		ListenAddr: *listenAddr,
 		PublicURL:  strings.TrimRight(*publicURL, "/"),

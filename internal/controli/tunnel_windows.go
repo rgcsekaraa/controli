@@ -58,7 +58,7 @@ func RunHostTunnelShellWithOptions(options TunnelHostOptions) int {
 		audit,
 		stats,
 		gate,
-		options.AuditInput,
+		options.HostOptions,
 		func(data []byte) error {
 			_, err := stdin.Write(data)
 			return err

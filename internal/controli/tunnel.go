@@ -34,6 +34,7 @@ type tunnelTerminalServer struct {
 	stats       *SessionStats
 	gate        *HostGate
 	auditInput  bool
+	options     HostOptions
 	stop        chan struct{}
 	input       func([]byte) error
 	resize      func(uint16, uint16)
@@ -44,13 +45,14 @@ type tunnelTerminalServer struct {
 	upgrader    websocket.Upgrader
 }
 
-func newTunnelTerminalServer(token string, audit *AuditLog, stats *SessionStats, gate *HostGate, auditInput bool, input func([]byte) error, resize func(uint16, uint16)) *tunnelTerminalServer {
+func newTunnelTerminalServer(token string, audit *AuditLog, stats *SessionStats, gate *HostGate, options HostOptions, input func([]byte) error, resize func(uint16, uint16)) *tunnelTerminalServer {
 	return &tunnelTerminalServer{
 		token:       token,
 		audit:       audit,
 		stats:       stats,
 		gate:        gate,
-		auditInput:  auditInput,
+		auditInput:  options.AuditInput,
+		options:     options,
 		stop:        make(chan struct{}),
 		input:       input,
 		resize:      resize,
@@ -117,6 +119,8 @@ func (s *tunnelTerminalServer) handleWebSocket(w http.ResponseWriter, r *http.Re
 			Data    string `json:"data"`
 			Columns int    `json:"columns"`
 			Rows    int    `json:"rows"`
+			ID      string `json:"id"`
+			Path    string `json:"path"`
 		}
 		if err := json.Unmarshal(data, &message); err != nil {
 			continue
@@ -141,8 +145,28 @@ func (s *tunnelTerminalServer) handleWebSocket(w http.ResponseWriter, r *http.Re
 				s.resize(uint16(message.Columns), uint16(message.Rows))
 				s.audit.Log("resize", map[string]any{"columns": message.Columns, "rows": message.Rows})
 			}
+		case ControlTypeDownloadRequest:
+			go handleDownloadRequest(tunnelDownloadSender{server: s, conn: conn}, s.audit, s.hostOptions(), ControlMessage{
+				Type: message.Type,
+				ID:   message.ID,
+				Path: message.Path,
+			})
 		}
 	}
+}
+
+func (s *tunnelTerminalServer) hostOptions() HostOptions {
+	return s.options
+}
+
+type tunnelDownloadSender struct {
+	server *tunnelTerminalServer
+	conn   *websocket.Conn
+}
+
+func (s tunnelDownloadSender) Send(side string, data []byte) error {
+	s.server.writeClient(s.conn, data)
+	return nil
 }
 
 func (s *tunnelTerminalServer) hasDifferentClient(clientID string) bool {

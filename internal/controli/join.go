@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -138,6 +139,8 @@ func (b *WebTerminalBridge) handleWebSocket(w http.ResponseWriter, r *http.Reque
 			Data    string `json:"data"`
 			Columns int    `json:"columns"`
 			Rows    int    `json:"rows"`
+			ID      string `json:"id"`
+			Path    string `json:"path"`
 		}
 		if err := json.Unmarshal(data, &message); err != nil {
 			continue
@@ -149,6 +152,9 @@ func (b *WebTerminalBridge) handleWebSocket(w http.ResponseWriter, r *http.Reque
 			}
 		case ControlTypeResize:
 			payload, _ := json.Marshal(map[string]any{"type": ControlTypeResize, "columns": message.Columns, "rows": message.Rows})
+			_ = b.relay.Send(SideClient, append([]byte(ControlPrefix), payload...))
+		case ControlTypeDownloadRequest:
+			payload, _ := json.Marshal(map[string]any{"type": ControlTypeDownloadRequest, "id": message.ID, "path": message.Path})
 			_ = b.relay.Send(SideClient, append([]byte(ControlPrefix), payload...))
 		}
 	}
@@ -190,6 +196,10 @@ func (b *WebTerminalBridge) relayLoop() {
 		if err != nil {
 			closeOnce(b.stop)
 			return
+		}
+		if strings.HasPrefix(string(data), ControlPrefix) {
+			b.broadcast(data)
+			continue
 		}
 		b.broadcast(data)
 	}

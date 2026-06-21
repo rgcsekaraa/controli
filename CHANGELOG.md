@@ -4,6 +4,14 @@ All notable changes to Controli will be documented in this file.
 
 ## Unreleased
 
+## 0.4.8
+
+- Added opt-in browser-terminal file downloads from the workspace `controli-drive` folder.
+- Added `--downloads` and `--download-approve=false` host flags for relay and tunnel sessions.
+- Restricted downloads to paths inside `controli-drive`, blocking absolute paths and directory traversal.
+- Added download start, completion, denial, and error audit events.
+- Added browser UI for requesting and saving downloads.
+
 ## 0.4.7
 
 - Required generated join passwords for short-code invite claims.

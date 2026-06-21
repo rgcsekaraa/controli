@@ -123,7 +123,7 @@ func RunHostRelayShellWithOptions(options HostOptions) int {
 				_ = command.Process.Signal(syscall.SIGTERM)
 				return
 			}
-			if handleHostControl(tty, data, audit, gate) {
+			if handleHostControl(tty, data, relay, audit, gate, options) {
 				continue
 			}
 			allowed, notice := gate.AllowInput(data, audit, options.AuditInput)
@@ -152,7 +152,7 @@ func RunHostRelayShellWithOptions(options HostOptions) int {
 	return 1
 }
 
-func handleHostControl(tty *os.File, data []byte, audit *AuditLog, gate *HostGate) bool {
+func handleHostControl(tty *os.File, data []byte, relay *RelayClient, audit *AuditLog, gate *HostGate, options HostOptions) bool {
 	if !strings.HasPrefix(string(data), ControlPrefix) {
 		return false
 	}
@@ -171,6 +171,8 @@ func handleHostControl(tty *os.File, data []byte, audit *AuditLog, gate *HostGat
 		gate.GuestConnected(audit, payload.ClientID)
 	case ControlTypeGuestDisconnected:
 		gate.GuestDisconnected(audit, payload.ClientID, payload.Final)
+	case ControlTypeDownloadRequest:
+		go handleDownloadRequest(relay, audit, options, payload)
 	}
 	return true
 }

@@ -10,6 +10,8 @@ Only one active guest is allowed per invite code. The same guest can reconnect a
 
 Audit logs are enabled by default and record session lifecycle, resize events, byte counts, and permission decisions. Typed input is not recorded unless `--audit-input` is set.
 
+Downloads are disabled unless the host starts with `--downloads`. When enabled, guests can download only files inside the workspace's `controli-drive` folder, and each download asks for host approval by default.
+
 Run a Worker and Cloudflare Tunnel you control. Rotate invite codes and join passwords by stopping and starting the host session.
 
 Tunnel mode keeps terminal traffic out of Durable Objects. Relay fallback uses Durable Objects for terminal traffic and should be reserved for short sessions because active relay WebSockets consume Durable Objects duration.

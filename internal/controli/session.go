@@ -24,23 +24,32 @@ const (
 	ControlTypeResize            = "resize"
 	ControlTypeGuestConnected    = "guest_connected"
 	ControlTypeGuestDisconnected = "guest_disconnected"
+	ControlTypeDownloadRequest   = "download_request"
+	ControlTypeDownloadStart     = "download_start"
+	ControlTypeDownloadChunk     = "download_chunk"
+	ControlTypeDownloadDone      = "download_done"
+	ControlTypeDownloadError     = "download_error"
 )
 
 type HostOptions struct {
-	RelayURL       string
-	SessionID      string
-	Secret         string
-	Cwd            string
-	Shell          string
-	WorkspaceName  string
-	GuestName      string
-	Mode           HostMode
-	RequireApprove bool
-	AuditLogPath   string
-	AuditInput     bool
-	StatusInterval time.Duration
-	Persist        bool
-	PersistName    string
+	RelayURL        string
+	SessionID       string
+	Secret          string
+	Cwd             string
+	Shell           string
+	WorkspaceName   string
+	GuestName       string
+	Mode            HostMode
+	RequireApprove  bool
+	AuditLogPath    string
+	AuditInput      bool
+	StatusInterval  time.Duration
+	Persist         bool
+	PersistName     string
+	Downloads       bool
+	DownloadDir     string
+	DownloadMax     int64
+	DownloadApprove bool
 }
 
 type ControlMessage struct {
@@ -50,6 +59,12 @@ type ControlMessage struct {
 	Text     string `json:"text,omitempty"`
 	ClientID string `json:"client_id,omitempty"`
 	Final    bool   `json:"final,omitempty"`
+	ID       string `json:"id,omitempty"`
+	Path     string `json:"path,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Size     int64  `json:"size,omitempty"`
+	Data     string `json:"data,omitempty"`
+	Error    string `json:"error,omitempty"`
 }
 
 type SessionStats struct {

@@ -51,10 +51,14 @@ Useful host flags:
 | `--status-interval 30s` | Print byte counters and last activity while hosting. |
 | `--room <name>` | Attach a room name to the invite. |
 | `--password <value>` | Set the join password printed with the 7-digit invite code. |
+| `--downloads` | Allow browser-terminal downloads from `<workspace>/controli-drive`. |
+| `--download-approve=false` | Skip the host approval prompt for each file download. |
 | `--persist=false` | Disable the persistent `tmux` backend on macOS and Linux. |
 | `--persist-name <name>` | Choose the stable `tmux` session name used for reattach. |
 
 By default audit logs are written under `~/.controli/audit/`.
+
+To share files, start the host with `--downloads` and place files inside the workspace's `controli-drive` folder. Guests can download only paths inside that folder, and each download asks for host approval by default.
 
 Tunnel mode requires a named Cloudflare Tunnel route pointing to the local Controli service, usually `http://localhost:8765`.
 
