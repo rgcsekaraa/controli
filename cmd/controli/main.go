@@ -161,7 +161,9 @@ func cmdHost(args []string) int {
 	persist := flags.Bool("persist", true, "keep the shell in a persistent host session when supported")
 	persistName := flags.String("persist-name", "", "stable persistent shell name")
 	downloads := flags.Bool("downloads", false, "allow guest downloads from the workspace controli-drive folder")
-	downloadApprove := flags.Bool("download-approve", true, "ask host before each download")
+	downloadApprove := flags.Bool("download-approve", true, "deprecated; use --download-code or host approval")
+	downloadCode := flags.String("download-code", "", "download authorization code; falls back to CONTROLI_DOWNLOAD_CODE")
+	s4dCode := flags.String("s4d-code", "", "alias for --download-code; falls back to CONTROLI_S4D_CODE")
 	if err := flags.Parse(args[1:]); err != nil {
 		return 2
 	}
@@ -256,6 +258,11 @@ func cmdHost(args []string) int {
 		activeAuditLog = ""
 	}
 	downloadDir := controli.DefaultDownloadDir(path)
+	activeDownloadCode := strings.TrimSpace(firstNonEmpty(*downloadCode, *s4dCode, os.Getenv("CONTROLI_DOWNLOAD_CODE"), os.Getenv("CONTROLI_S4D_CODE")))
+	activeDownloadCodeHash := ""
+	if activeDownloadCode != "" {
+		activeDownloadCodeHash = controli.HashDownloadCode(activeDownloadCode)
+	}
 	if *downloads {
 		if err := os.MkdirAll(downloadDir, 0o700); err != nil {
 			fmt.Fprintln(os.Stderr, "error:", err)
@@ -269,29 +276,33 @@ func cmdHost(args []string) int {
 	fmt.Println("persistent_shell:", *persist)
 	if *downloads {
 		fmt.Println("download_dir:", downloadDir)
+		if activeDownloadCodeHash != "" {
+			fmt.Println("download_code: configured")
+		}
 	}
 	if activeAuditLog != "" {
 		fmt.Println("audit_log:", activeAuditLog)
 	}
 	return controli.RunHostRelayShellWithOptions(controli.HostOptions{
-		RelayURL:        activeRelayURL,
-		SessionID:       sessionID,
-		Secret:          secret,
-		Cwd:             path,
-		Shell:           activeShell,
-		WorkspaceName:   *workspaceName,
-		GuestName:       *name,
-		Mode:            mode,
-		RequireApprove:  *approve,
-		AuditLogPath:    activeAuditLog,
-		AuditInput:      *auditInput,
-		StatusInterval:  *statusInterval,
-		Persist:         *persist,
-		PersistName:     *persistName,
-		Downloads:       *downloads,
-		DownloadDir:     downloadDir,
-		DownloadMax:     controli.DefaultDownloadMax,
-		DownloadApprove: *downloadApprove,
+		RelayURL:         activeRelayURL,
+		SessionID:        sessionID,
+		Secret:           secret,
+		Cwd:              path,
+		Shell:            activeShell,
+		WorkspaceName:    *workspaceName,
+		GuestName:        *name,
+		Mode:             mode,
+		RequireApprove:   *approve,
+		AuditLogPath:     activeAuditLog,
+		AuditInput:       *auditInput,
+		StatusInterval:   *statusInterval,
+		Persist:          *persist,
+		PersistName:      *persistName,
+		Downloads:        *downloads,
+		DownloadDir:      downloadDir,
+		DownloadMax:      controli.DefaultDownloadMax,
+		DownloadApprove:  *downloadApprove,
+		DownloadCodeHash: activeDownloadCodeHash,
 	})
 }
 
@@ -316,7 +327,9 @@ func cmdHostTunnel(args []string) int {
 	persist := flags.Bool("persist", true, "keep the shell in a persistent host session when supported")
 	persistName := flags.String("persist-name", "", "stable persistent shell name")
 	downloads := flags.Bool("downloads", false, "allow guest downloads from the workspace controli-drive folder")
-	downloadApprove := flags.Bool("download-approve", true, "ask host before each download")
+	downloadApprove := flags.Bool("download-approve", true, "deprecated; use --download-code or host approval")
+	downloadCode := flags.String("download-code", "", "download authorization code; falls back to CONTROLI_DOWNLOAD_CODE")
+	s4dCode := flags.String("s4d-code", "", "alias for --download-code; falls back to CONTROLI_S4D_CODE")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -413,6 +426,11 @@ func cmdHostTunnel(args []string) int {
 		activeAuditLog = ""
 	}
 	downloadDir := controli.DefaultDownloadDir(path)
+	activeDownloadCode := strings.TrimSpace(firstNonEmpty(*downloadCode, *s4dCode, os.Getenv("CONTROLI_DOWNLOAD_CODE"), os.Getenv("CONTROLI_S4D_CODE")))
+	activeDownloadCodeHash := ""
+	if activeDownloadCode != "" {
+		activeDownloadCodeHash = controli.HashDownloadCode(activeDownloadCode)
+	}
 	if *downloads {
 		if err := os.MkdirAll(downloadDir, 0o700); err != nil {
 			fmt.Fprintln(os.Stderr, "error:", err)
@@ -426,30 +444,34 @@ func cmdHostTunnel(args []string) int {
 	fmt.Println("listen:", *listenAddr)
 	if *downloads {
 		fmt.Println("download_dir:", downloadDir)
+		if activeDownloadCodeHash != "" {
+			fmt.Println("download_code: configured")
+		}
 	}
 	if activeAuditLog != "" {
 		fmt.Println("audit_log:", activeAuditLog)
 	}
 	return controli.RunHostTunnelShellWithOptions(controli.TunnelHostOptions{
 		HostOptions: controli.HostOptions{
-			RelayURL:        activeRelayURL,
-			SessionID:       sessionID,
-			Secret:          secret,
-			Cwd:             path,
-			Shell:           activeShell,
-			WorkspaceName:   *workspaceName,
-			GuestName:       *name,
-			Mode:            mode,
-			RequireApprove:  *approve,
-			AuditLogPath:    activeAuditLog,
-			AuditInput:      *auditInput,
-			StatusInterval:  *statusInterval,
-			Persist:         *persist,
-			PersistName:     *persistName,
-			Downloads:       *downloads,
-			DownloadDir:     downloadDir,
-			DownloadMax:     controli.DefaultDownloadMax,
-			DownloadApprove: *downloadApprove,
+			RelayURL:         activeRelayURL,
+			SessionID:        sessionID,
+			Secret:           secret,
+			Cwd:              path,
+			Shell:            activeShell,
+			WorkspaceName:    *workspaceName,
+			GuestName:        *name,
+			Mode:             mode,
+			RequireApprove:   *approve,
+			AuditLogPath:     activeAuditLog,
+			AuditInput:       *auditInput,
+			StatusInterval:   *statusInterval,
+			Persist:          *persist,
+			PersistName:      *persistName,
+			Downloads:        *downloads,
+			DownloadDir:      downloadDir,
+			DownloadMax:      controli.DefaultDownloadMax,
+			DownloadApprove:  *downloadApprove,
+			DownloadCodeHash: activeDownloadCodeHash,
 		},
 		ListenAddr: *listenAddr,
 		PublicURL:  strings.TrimRight(*publicURL, "/"),

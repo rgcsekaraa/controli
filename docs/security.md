@@ -10,7 +10,7 @@ Only one active guest is allowed per invite code. The same guest can reconnect a
 
 Audit logs are enabled by default and record session lifecycle, resize events, byte counts, and permission decisions. Typed input is not recorded unless `--audit-input` is set.
 
-Downloads are disabled unless the host starts with `--downloads`. When enabled, guests can download only files inside the workspace's `controli-drive` folder, and each download asks for host approval by default.
+Downloads are disabled unless the host starts with `--downloads`. When enabled, guests can download only files inside the workspace's `controli-drive` folder. Hosts can set `--download-code`, `--s4d-code`, `CONTROLI_DOWNLOAD_CODE`, or `CONTROLI_S4D_CODE` so guests can authorize downloads with a separate secret; blank or wrong codes fall back to host approval.
 
 Run a Worker and Cloudflare Tunnel you control. Rotate invite codes and join passwords by stopping and starting the host session.
 

@@ -64,7 +64,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - run: go test ./...
+      - run: CGO_ENABLED=0 go test ./...
       - run: CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GOARM=${{ matrix.goarm }} go build -trimpath -ldflags="-s -w" -o dist/${{ matrix.name }} ./cmd/controli
       - uses: actions/upload-artifact@v7
         with:
@@ -82,7 +82,7 @@ jobs:
           merge-multiple: true
       - name: Generate SHA256 checksums
         run: (cd dist && sha256sum * > SHA256SUMS.txt)
-      - run: gh release create "${GITHUB_REF_NAME}" dist/* --title "Controli ${GITHUB_REF_NAME}" --notes "Expanded cross-platform release build."
+      - run: gh release create "${GITHUB_REF_NAME}" dist/* --title "Controli ${GITHUB_REF_NAME}" --notes "Adds download-code authorization, browser terminal scrolling fixes, and hardened download approval."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}

@@ -135,12 +135,13 @@ func (b *WebTerminalBridge) handleWebSocket(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		var message struct {
-			Type    string `json:"type"`
-			Data    string `json:"data"`
-			Columns int    `json:"columns"`
-			Rows    int    `json:"rows"`
-			ID      string `json:"id"`
-			Path    string `json:"path"`
+			Type         string `json:"type"`
+			Data         string `json:"data"`
+			Columns      int    `json:"columns"`
+			Rows         int    `json:"rows"`
+			ID           string `json:"id"`
+			Path         string `json:"path"`
+			DownloadCode string `json:"download_code"`
 		}
 		if err := json.Unmarshal(data, &message); err != nil {
 			continue
@@ -154,7 +155,7 @@ func (b *WebTerminalBridge) handleWebSocket(w http.ResponseWriter, r *http.Reque
 			payload, _ := json.Marshal(map[string]any{"type": ControlTypeResize, "columns": message.Columns, "rows": message.Rows})
 			_ = b.relay.Send(SideClient, append([]byte(ControlPrefix), payload...))
 		case ControlTypeDownloadRequest:
-			payload, _ := json.Marshal(map[string]any{"type": ControlTypeDownloadRequest, "id": message.ID, "path": message.Path})
+			payload, _ := json.Marshal(map[string]any{"type": ControlTypeDownloadRequest, "id": message.ID, "path": message.Path, "download_code": message.DownloadCode})
 			_ = b.relay.Send(SideClient, append([]byte(ControlPrefix), payload...))
 		}
 	}

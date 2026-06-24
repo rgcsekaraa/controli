@@ -1,7 +1,7 @@
 .PHONY: test build docs clean
 
 GO ?= go
-GOFLAGS ?=
+GOFLAGS ?= -trimpath -ldflags="-s -w"
 DIST := dist
 
 TARGETS := \

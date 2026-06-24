@@ -52,7 +52,17 @@ func TestWebTerminalHTMLUsesEmbeddedAssets(t *testing.T) {
 		t.Fatal("xterm.js asset is empty")
 	}
 	html := RenderWebTerminalHTML("token-123")
-	for _, want := range []string{"token-123", "/assets/xterm.js", "/assets/xterm.css", "/ws?token="} {
+	for _, want := range []string{
+		"token-123",
+		"/assets/xterm.js",
+		"/assets/xterm.css",
+		"/ws?token=",
+		"body { display: flex; flex-direction: column; }",
+		"#terminal { flex: 1 1 auto; min-height: 0;",
+		".xterm .xterm-viewport { overflow-y: auto;",
+		"new ResizeObserver",
+		"download_code",
+	} {
 		if !strings.Contains(html, want) {
 			t.Fatalf("RenderWebTerminalHTML missing %q", want)
 		}

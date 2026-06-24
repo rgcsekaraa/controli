@@ -32,11 +32,13 @@ func RenderWebTerminalHTML(token string) string {
   <link rel="stylesheet" href="/assets/xterm.css?token=%[1]s">
   <style>
     html, body { width: 100%%; height: 100%%; margin: 0; background: #0c0c0c; overflow: hidden; }
-    #bar { height: 28px; display: flex; align-items: center; gap: 8px; padding: 0 8px; box-sizing: border-box; color: #d7d7d7; background: #151515; font: 12px/28px system-ui, sans-serif; }
+    body { display: flex; flex-direction: column; }
+    #bar { flex: 0 0 28px; height: 28px; display: flex; align-items: center; gap: 8px; padding: 0 8px; box-sizing: border-box; color: #d7d7d7; background: #151515; font: 12px/28px system-ui, sans-serif; }
     #status { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #download { height: 22px; border: 1px solid #555; background: #242424; color: #f1f1f1; font: 12px system-ui, sans-serif; cursor: pointer; }
-    #terminal { width: 100%%; height: calc(100%% - 28px); }
-    .xterm { height: 100%%; padding: 8px; box-sizing: border-box; }
+    #terminal { flex: 1 1 auto; min-height: 0; width: 100%%; overflow: hidden; }
+    .xterm { width: 100%%; height: 100%%; padding: 8px; box-sizing: border-box; }
+    .xterm .xterm-viewport { overflow-y: auto; scrollbar-width: thin; }
   </style>
 </head>
 <body>
@@ -89,16 +91,22 @@ func RenderWebTerminalHTML(token string) string {
     function sendResize() {
       if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'resize', columns: term.cols, rows: term.rows }));
     }
+    const resizeObserver = new ResizeObserver(() => {
+      fitAddon.fit();
+      sendResize();
+    });
+    resizeObserver.observe(document.getElementById('terminal'));
     function sendDownloadRequest() {
       const path = prompt('Download from controli-drive:');
       if (!path) return;
+      const downloadCode = prompt('Download code (optional; host approval required if blank or wrong):') || '';
       if (!socket || socket.readyState !== WebSocket.OPEN) {
         status.textContent = 'download unavailable while disconnected';
         return;
       }
       const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random();
       downloads.set(id, { name: 'download', chunks: [], received: 0, size: 0 });
-      socket.send(JSON.stringify({ type: 'download_request', id, path }));
+      socket.send(JSON.stringify({ type: 'download_request', id, path, download_code: downloadCode }));
       status.textContent = 'download requested';
     }
     function handleControl(payload) {

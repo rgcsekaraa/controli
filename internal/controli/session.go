@@ -32,39 +32,41 @@ const (
 )
 
 type HostOptions struct {
-	RelayURL        string
-	SessionID       string
-	Secret          string
-	Cwd             string
-	Shell           string
-	WorkspaceName   string
-	GuestName       string
-	Mode            HostMode
-	RequireApprove  bool
-	AuditLogPath    string
-	AuditInput      bool
-	StatusInterval  time.Duration
-	Persist         bool
-	PersistName     string
-	Downloads       bool
-	DownloadDir     string
-	DownloadMax     int64
-	DownloadApprove bool
+	RelayURL         string
+	SessionID        string
+	Secret           string
+	Cwd              string
+	Shell            string
+	WorkspaceName    string
+	GuestName        string
+	Mode             HostMode
+	RequireApprove   bool
+	AuditLogPath     string
+	AuditInput       bool
+	StatusInterval   time.Duration
+	Persist          bool
+	PersistName      string
+	Downloads        bool
+	DownloadDir      string
+	DownloadMax      int64
+	DownloadApprove  bool
+	DownloadCodeHash string
 }
 
 type ControlMessage struct {
-	Type     string `json:"type"`
-	Columns  uint16 `json:"columns,omitempty"`
-	Rows     uint16 `json:"rows,omitempty"`
-	Text     string `json:"text,omitempty"`
-	ClientID string `json:"client_id,omitempty"`
-	Final    bool   `json:"final,omitempty"`
-	ID       string `json:"id,omitempty"`
-	Path     string `json:"path,omitempty"`
-	Name     string `json:"name,omitempty"`
-	Size     int64  `json:"size,omitempty"`
-	Data     string `json:"data,omitempty"`
-	Error    string `json:"error,omitempty"`
+	Type         string `json:"type"`
+	Columns      uint16 `json:"columns,omitempty"`
+	Rows         uint16 `json:"rows,omitempty"`
+	Text         string `json:"text,omitempty"`
+	ClientID     string `json:"client_id,omitempty"`
+	Final        bool   `json:"final,omitempty"`
+	ID           string `json:"id,omitempty"`
+	Path         string `json:"path,omitempty"`
+	DownloadCode string `json:"download_code,omitempty"`
+	Name         string `json:"name,omitempty"`
+	Size         int64  `json:"size,omitempty"`
+	Data         string `json:"data,omitempty"`
+	Error        string `json:"error,omitempty"`
 }
 
 type SessionStats struct {

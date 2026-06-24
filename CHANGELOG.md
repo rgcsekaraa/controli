@@ -4,6 +4,14 @@ All notable changes to Controli will be documented in this file.
 
 ## Unreleased
 
+## 0.4.9
+
+- Added `--download-code`/`--s4d-code` and `CONTROLI_DOWNLOAD_CODE`/`CONTROLI_S4D_CODE` for download authorization without embedding the secret in share links.
+- Browser downloads now ask for an optional download code and fall back to host approval when the code is missing or wrong.
+- Audited whether each download was approved by download code or host prompt without logging the code itself.
+- Fixed browser terminal scrolling when the download/status bar is visible.
+- Deprecated `--download-approve=false`; downloads require either a valid download code or host approval.
+
 ## 0.4.8
 
 - Added opt-in browser-terminal file downloads from the workspace `controli-drive` folder.

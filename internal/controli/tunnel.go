@@ -115,12 +115,13 @@ func (s *tunnelTerminalServer) handleWebSocket(w http.ResponseWriter, r *http.Re
 			return
 		}
 		var message struct {
-			Type    string `json:"type"`
-			Data    string `json:"data"`
-			Columns int    `json:"columns"`
-			Rows    int    `json:"rows"`
-			ID      string `json:"id"`
-			Path    string `json:"path"`
+			Type         string `json:"type"`
+			Data         string `json:"data"`
+			Columns      int    `json:"columns"`
+			Rows         int    `json:"rows"`
+			ID           string `json:"id"`
+			Path         string `json:"path"`
+			DownloadCode string `json:"download_code"`
 		}
 		if err := json.Unmarshal(data, &message); err != nil {
 			continue
@@ -147,9 +148,10 @@ func (s *tunnelTerminalServer) handleWebSocket(w http.ResponseWriter, r *http.Re
 			}
 		case ControlTypeDownloadRequest:
 			go handleDownloadRequest(tunnelDownloadSender{server: s, conn: conn}, s.audit, s.hostOptions(), ControlMessage{
-				Type: message.Type,
-				ID:   message.ID,
-				Path: message.Path,
+				Type:         message.Type,
+				ID:           message.ID,
+				Path:         message.Path,
+				DownloadCode: message.DownloadCode,
 			})
 		}
 	}

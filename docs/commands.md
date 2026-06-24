@@ -34,9 +34,9 @@ Starts the configured workspace shell and serves the browser terminal locally fo
 | `--audit-input` | No | `false` | Store typed input text in audit records. |
 | `--status-interval 30s` | No | disabled | Print session counters while hosting. |
 | `--downloads` | No | `false` | Allow browser-terminal downloads from `<workspace>/controli-drive`. |
-| `--download-approve=false` | No | `true` | Skip the host approval prompt for each download. |
-| `--downloads` | No | `false` | Allow browser-terminal downloads from `<workspace>/controli-drive`. |
-| `--download-approve=false` | No | `true` | Skip the host approval prompt for each download. |
+| `--download-code <value>` | No | `CONTROLI_DOWNLOAD_CODE` | Let guests authorize downloads with this secret code; wrong or blank codes fall back to host approval. |
+| `--s4d-code <value>` | No | `CONTROLI_S4D_CODE` | Alias for `--download-code`. |
+| `--download-approve=false` | No | `true` | Deprecated; use `--download-code` or host approval. |
 
 Examples:
 
@@ -77,6 +77,10 @@ Starts the configured workspace shell, registers a 7-digit invite code plus a jo
 | `--audit-log off` | No | | Disable audit logging. |
 | `--audit-input` | No | `false` | Store typed input text in audit records. |
 | `--status-interval 30s` | No | disabled | Print session counters while hosting. |
+| `--downloads` | No | `false` | Allow browser-terminal downloads from `<workspace>/controli-drive`. |
+| `--download-code <value>` | No | `CONTROLI_DOWNLOAD_CODE` | Let guests authorize downloads with this secret code; wrong or blank codes fall back to host approval. |
+| `--s4d-code <value>` | No | `CONTROLI_S4D_CODE` | Alias for `--download-code`. |
+| `--download-approve=false` | No | `true` | Deprecated; use `--download-code` or host approval. |
 
 Examples:
 
@@ -109,7 +113,7 @@ controli join 1234567
 
 Resolves the code and opens the local browser terminal by default on Windows, macOS, and Linux. Use CLI join for relay fallback sessions or diagnostics.
 
-When the host enables `--downloads`, files placed under `<workspace>/controli-drive` can be downloaded from the browser terminal's Download button by entering a path relative to that folder. Other folders are not downloadable.
+When the host enables `--downloads`, files placed under `<workspace>/controli-drive` can be downloaded from the browser terminal's Download button by entering a path relative to that folder. If the host configured a download code, the browser asks for it; blank or wrong codes fall back to host approval. Other folders are not downloadable.
 
 Only one guest can be connected to a live session at a time. The same 7-digit code can be used again while the invite has not expired. Reconnects from the same guest keep existing approval; a different guest requires fresh host approval before input can reach the shell.
 

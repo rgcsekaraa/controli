@@ -1,6 +1,7 @@
 package controli
 
 import (
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -22,6 +23,20 @@ type controlSender interface {
 
 func DefaultDownloadDir(workspacePath string) string {
 	return filepath.Join(workspacePath, DefaultDownloadDirName)
+}
+
+func HashDownloadCode(value string) string {
+	return HashJoinPassword(value)
+}
+
+func downloadCodeMatches(expectedHash, provided string) bool {
+	expectedHash = strings.TrimSpace(expectedHash)
+	provided = strings.TrimSpace(provided)
+	if expectedHash == "" || provided == "" {
+		return false
+	}
+	providedHash := HashDownloadCode(provided)
+	return subtle.ConstantTimeCompare([]byte(expectedHash), []byte(providedHash)) == 1
 }
 
 func cleanDownloadRoot(root string) (string, error) {
@@ -110,12 +125,20 @@ func handleDownloadRequest(sender controlSender, audit *AuditLog, options HostOp
 		fail(fmt.Sprintf("file exceeds download limit of %s", formatBytes(uint64(max))))
 		return
 	}
-	if options.DownloadApprove {
-		rel, _ := filepath.Rel(root, target)
+	rel, _ := filepath.Rel(root, target)
+	authorizedBy := "host_prompt"
+	if downloadCodeMatches(options.DownloadCodeHash, request.DownloadCode) {
+		authorizedBy = "download_code"
+		audit.Log("download_approved", map[string]any{"id": id, "path": target, "method": authorizedBy})
+	} else {
+		if options.DownloadCodeHash != "" && strings.TrimSpace(request.DownloadCode) != "" {
+			audit.Log("download_code_denied", map[string]any{"id": id, "path": target})
+		}
 		if !promptHost(fmt.Sprintf("Allow guest to download %q from %s?", rel, DefaultDownloadDirName)) {
 			fail("host denied download")
 			return
 		}
+		audit.Log("download_approved", map[string]any{"id": id, "path": target, "method": authorizedBy})
 	}
 	file, err := os.Open(target)
 	if err != nil {
@@ -123,7 +146,7 @@ func handleDownloadRequest(sender controlSender, audit *AuditLog, options HostOp
 		return
 	}
 	defer file.Close()
-	audit.Log("download_start", map[string]any{"id": id, "path": target, "bytes": info.Size()})
+	audit.Log("download_start", map[string]any{"id": id, "path": target, "bytes": info.Size(), "method": authorizedBy})
 	if err := sendControl(sender, ControlMessage{Type: ControlTypeDownloadStart, ID: id, Name: filepath.Base(target), Size: info.Size()}); err != nil {
 		audit.Log("download_error", map[string]any{"id": id, "path": target, "error": err.Error()})
 		return
