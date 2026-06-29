@@ -14,7 +14,7 @@ The current implementation is a native Go binary.
 
 ## Install
 
-Download the binary that matches the guest or host machine. Current release: [v0.4.9](https://github.com/rgcsekaraa/controli/releases/tag/v0.4.9).
+Download the binary that matches the guest or host machine. Current release: [v0.4.10](https://github.com/rgcsekaraa/controli/releases/tag/v0.4.10).
 
 Release page:
 
@@ -38,10 +38,10 @@ https://rgcsekaraa.github.io/controli/commands
 
 | Machine | Download |
 | --- | --- |
-| Most Intel or AMD PCs | [controli-windows-amd64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-windows-amd64.exe) |
-| Older 32-bit PCs | [controli-windows-386.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-windows-386.exe) |
-| Windows on ARM64 | [controli-windows-arm64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-windows-arm64.exe) |
-| Older Windows ARM devices | [controli-windows-arm.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-windows-arm.exe) |
+| Most Intel or AMD PCs | [controli-windows-amd64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-windows-amd64.exe) |
+| Older 32-bit PCs | [controli-windows-386.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-windows-386.exe) |
+| Windows on ARM64 | [controli-windows-arm64.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-windows-arm64.exe) |
+| Older Windows ARM devices | [controli-windows-arm.exe](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-windows-arm.exe) |
 
 Quick download:
 
@@ -56,8 +56,8 @@ Windows release binaries are currently unsigned. If Device Guard or App Control 
 
 | Machine | Download |
 | --- | --- |
-| Apple Silicon | [controli-darwin-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-darwin-arm64) |
-| Intel Mac | [controli-darwin-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-darwin-amd64) |
+| Apple Silicon | [controli-darwin-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-darwin-arm64) |
+| Intel Mac | [controli-darwin-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-darwin-amd64) |
 
 Quick download for Apple Silicon:
 
@@ -71,14 +71,14 @@ chmod +x controli
 
 | Machine | Download |
 | --- | --- |
-| Most Intel or AMD desktops and servers | [controli-linux-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-linux-amd64) |
-| Older 32-bit Intel or AMD systems | [controli-linux-386](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-linux-386) |
-| ARM64 servers and boards | [controli-linux-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-linux-arm64) |
-| ARMv7 boards | [controli-linux-armv7](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-linux-armv7) |
-| ARMv6 boards | [controli-linux-armv6](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-linux-armv6) |
-| PowerPC 64 little-endian servers | [controli-linux-ppc64le](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-linux-ppc64le) |
-| RISC-V 64 systems | [controli-linux-riscv64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-linux-riscv64) |
-| IBM Z or LinuxONE | [controli-linux-s390x](https://github.com/rgcsekaraa/controli/releases/download/v0.4.9/controli-linux-s390x) |
+| Most Intel or AMD desktops and servers | [controli-linux-amd64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-linux-amd64) |
+| Older 32-bit Intel or AMD systems | [controli-linux-386](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-linux-386) |
+| ARM64 servers and boards | [controli-linux-arm64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-linux-arm64) |
+| ARMv7 boards | [controli-linux-armv7](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-linux-armv7) |
+| ARMv6 boards | [controli-linux-armv6](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-linux-armv6) |
+| PowerPC 64 little-endian servers | [controli-linux-ppc64le](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-linux-ppc64le) |
+| RISC-V 64 systems | [controli-linux-riscv64](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-linux-riscv64) |
+| IBM Z or LinuxONE | [controli-linux-s390x](https://github.com/rgcsekaraa/controli/releases/download/v0.4.10/controli-linux-s390x) |
 
 Quick download for most PCs and servers:
 
@@ -228,7 +228,7 @@ controli join 1234567
 controli join 1234567 --password abcd-1234-wxyz
 ```
 
-By default, joining opens a local browser terminal powered by embedded xterm.js. This avoids Windows console rendering freezes and gives the same terminal renderer on Windows, macOS, and Linux.
+By default, joining opens a local browser terminal powered by embedded xterm.js. This avoids Windows console rendering freezes and gives the same terminal renderer on Windows, macOS, and Linux. Terminal history can be scrolled with the mouse wheel, trackpad, touch gestures, or the terminal scrollbar.
 
 Direct console rendering is available for debugging:
 

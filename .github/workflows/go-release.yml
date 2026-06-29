@@ -82,7 +82,7 @@ jobs:
           merge-multiple: true
       - name: Generate SHA256 checksums
         run: (cd dist && sha256sum * > SHA256SUMS.txt)
-      - run: gh release create "${GITHUB_REF_NAME}" dist/* --title "Controli ${GITHUB_REF_NAME}" --notes "Adds download-code authorization, browser terminal scrolling fixes, and hardened download approval."
+      - run: gh release create "${GITHUB_REF_NAME}" dist/* --title "Controli ${GITHUB_REF_NAME}" --notes "Fixes browser terminal scrollback for mouse-wheel, trackpad, and touch scrolling while keeping download-code authorization."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}

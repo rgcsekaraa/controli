@@ -4,6 +4,11 @@ All notable changes to Controli will be documented in this file.
 
 ## Unreleased
 
+## 0.4.10
+
+- Fixed browser terminal history scrolling for client mouse wheels and touch gestures when the download/status bar is present.
+- Restored xterm's always-scroll viewport behavior and added explicit wheel/touch forwarding into terminal scrollback.
+
 ## 0.4.9
 
 - Added `--download-code`/`--s4d-code` and `CONTROLI_DOWNLOAD_CODE`/`CONTROLI_S4D_CODE` for download authorization without embedding the secret in share links.

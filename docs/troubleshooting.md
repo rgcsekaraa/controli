@@ -11,6 +11,8 @@ If a guest cannot join:
 
 If rendering is slow, use the default browser terminal instead of `--console`.
 
+If the browser terminal does not scroll, upgrade both sides to the latest release and reopen the terminal page. Current builds forward mouse-wheel, trackpad, and touch gestures into xterm scrollback even when the download/status bar is visible.
+
 If Cloudflare reports Durable Objects duration limits, stop relay fallback sessions and use tunnel mode:
 
 ```bash

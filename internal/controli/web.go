@@ -38,7 +38,7 @@ func RenderWebTerminalHTML(token string) string {
     #download { height: 22px; border: 1px solid #555; background: #242424; color: #f1f1f1; font: 12px system-ui, sans-serif; cursor: pointer; }
     #terminal { flex: 1 1 auto; min-height: 0; width: 100%%; overflow: hidden; }
     .xterm { width: 100%%; height: 100%%; padding: 8px; box-sizing: border-box; }
-    .xterm .xterm-viewport { overflow-y: auto; scrollbar-width: thin; }
+    .xterm .xterm-viewport { overflow-y: scroll; scrollbar-width: thin; }
   </style>
 </head>
 <body>
@@ -51,6 +51,7 @@ func RenderWebTerminalHTML(token string) string {
     const controlPrefix = '\x00CONTROLI:';
     const status = document.getElementById('status');
     const downloadButton = document.getElementById('download');
+    const terminalElement = document.getElementById('terminal');
     const term = new Terminal({
       cursorBlink: true,
       convertEol: false,
@@ -62,7 +63,7 @@ func RenderWebTerminalHTML(token string) string {
     });
     const fitAddon = new FitAddon.FitAddon();
     term.loadAddon(fitAddon);
-    term.open(document.getElementById('terminal'));
+    term.open(terminalElement);
     fitAddon.fit();
     term.focus();
     const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -95,7 +96,40 @@ func RenderWebTerminalHTML(token string) string {
       fitAddon.fit();
       sendResize();
     });
-    resizeObserver.observe(document.getElementById('terminal'));
+    resizeObserver.observe(terminalElement);
+    function scrollTerminalByDelta(deltaY, deltaMode) {
+      if (!deltaY) return;
+      let lines;
+      if (deltaMode === WheelEvent.DOM_DELTA_LINE) {
+        lines = Math.max(1, Math.ceil(Math.abs(deltaY)));
+      } else if (deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+        lines = Math.max(1, term.rows);
+      } else {
+        const rowHeight = Math.max(8, terminalElement.clientHeight / Math.max(1, term.rows));
+        lines = Math.max(1, Math.ceil(Math.abs(deltaY) / rowHeight));
+      }
+      term.scrollLines(deltaY < 0 ? -lines : lines);
+    }
+    terminalElement.addEventListener('wheel', (event) => {
+      if (event.ctrlKey) return;
+      event.preventDefault();
+      scrollTerminalByDelta(event.deltaY, event.deltaMode);
+    }, { passive: false });
+    let lastTouchY = null;
+    terminalElement.addEventListener('touchstart', (event) => {
+      lastTouchY = event.touches.length === 1 ? event.touches[0].clientY : null;
+    }, { passive: true });
+    terminalElement.addEventListener('touchmove', (event) => {
+      if (lastTouchY === null || event.touches.length !== 1) return;
+      const y = event.touches[0].clientY;
+      const deltaY = lastTouchY - y;
+      lastTouchY = y;
+      if (Math.abs(deltaY) < 1) return;
+      event.preventDefault();
+      scrollTerminalByDelta(deltaY, WheelEvent.DOM_DELTA_PIXEL);
+    }, { passive: false });
+    terminalElement.addEventListener('touchend', () => { lastTouchY = null; });
+    terminalElement.addEventListener('touchcancel', () => { lastTouchY = null; });
     function sendDownloadRequest() {
       const path = prompt('Download from controli-drive:');
       if (!path) return;
